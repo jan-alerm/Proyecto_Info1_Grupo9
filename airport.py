@@ -154,3 +154,7 @@ def map_airports(airports):
     print("Archivo 'airports_map.kml' creado. Ábrelo con Google Earth.")
 
 
+class Aircraft:
+    def __innit_(self):
+        
+
