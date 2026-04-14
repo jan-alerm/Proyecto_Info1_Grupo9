@@ -158,3 +158,27 @@ class Aircraft:
     def __innit_(self):
         
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def PlotArrivals (aircrafts) 
