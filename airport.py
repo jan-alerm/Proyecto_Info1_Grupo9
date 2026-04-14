@@ -155,30 +155,11 @@ def map_airports(airports):
 
 
 class Aircraft:
-    def __innit_(self):
-        
+    def __innit_(self,id,company,airport,time):
+        self.id = id
+        self.company = company
+        self.origin = origin
+        self.time = time
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def PlotArrivals (aircrafts) 
+def load_arrivals(filename):
+    f = open(filename,"r")
