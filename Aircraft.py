@@ -122,7 +122,46 @@ def plot_airlines(lista_vols):
     plt.show()
     return True
 
+def PlotFlightsType(aircrafts):
+    if len(aircrafts) == 0:
+        print("Error: The aircraft list is empty.")
+        return False
 
+    schengen_prefixes = [
+        'LO', 'EB', 'LK', 'LC', 'EK', 'EE', 'EF', 'LF', 'ED', 'LG', 'EH', 'LH', 'BI',
+        'LI', 'EV', 'EY', 'EL', 'LM', 'EN', 'EP', 'LP', 'LZ', 'LJ', 'LE', 'ES', 'LS'
+    ]
+
+    total_schengen = 0
+    total_no_schengen = 0
+
+    for avion in aircrafts:
+        prefijo = avion.origin[:2]
+
+        if prefijo in schengen_prefixes:
+            total_schengen += 1
+        else:
+            total_no_schengen += 1
+
+    ejes_x = ['Schengen', 'Non-Schengen']
+    ejes_y = [total_schengen, total_no_schengen]
+
+    plt.figure(figsize=(8, 6))
+    colores = ['green', 'red']
+
+    plt.bar(ejes_x, ejes_y, color=colores, edgecolor='black')
+
+    plt.title("Total Flights by Origin Type")
+    plt.xlabel("Type of Origin")
+    plt.ylabel("Number of Aircraft")
+
+    for i in range(len(ejes_y)):
+        plt.text(i, ejes_y[i] + 0.1, str(ejes_y[i]), ha='center', va='bottom', fontsize=12)
+
+    plt.grid(axis='y', linestyle='--', alpha=0.3)
+    plt.show()
+
+    return True
 
 
 
