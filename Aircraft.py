@@ -26,3 +26,30 @@ def load_arrivals(filename):
 
     f.close()
     return lista_arrivals
+
+    def f_plot_arrivals(self):
+        if not self.lista_aeropuertos:
+            messagebox.showwarning("Error", "No hay datos cargados. Usa el botón 1 primero.")
+            return
+
+        try:
+
+            horas_formato = [int(obj.time[:2]) for obj in self.lista_aeropuertos]
+
+            cont_hora = [0] * 24
+            for hora in horas_formato:
+                if 0 <= hora < 24:
+                    cont_hora[hora] += 1
+
+            eje_x = list(range(24))
+            eje_y = cont_hora
+
+            plt.figure(figsize=(10, 5))
+            plt.bar(eje_x, eje_y, color='blue', edgecolor='black')
+            plt.title("Vuelos por Hora de Llegada")
+            plt.xlabel("Hora del día")
+            plt.ylabel("Cantidad de aviones")
+            plt.xticks(eje_x)  # Para que salgan todos los números del 0 al 23
+            plt.grid(axis='y', linestyle='--', alpha=0.4)
+
+            plt.show()
