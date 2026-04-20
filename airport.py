@@ -153,10 +153,3 @@ def map_airports(airports):
     f.close()
     print("Archivo 'airports_map.kml' creado. Ábrelo con Google Earth.")
 
-
-
-
-    plt.grid(axis='y', linestyle='--', alpha=0.3)
-    plt.show()
-
-    return True
