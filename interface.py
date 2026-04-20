@@ -1,15 +1,14 @@
-
-import tkinter as tk
-from tkinter import messagebox
-from airport import *
 from Aircraft import *
 
+
 class AirportApp:
-    def __init__(self,root):
+    def __init__(self, root):
+        self.lista_vuelos = []
         self.root = root
         self.root.title("Airport Manager v1.0")
         self.root.geometry("400x500")
         self.lista_aeropuertos = []
+
 
         tk.Label(root, text="AIRPORT MANAGEMENT SYSTEM", font=("Arial", 14, "bold")).pack(pady=10)
 
@@ -29,9 +28,8 @@ class AirportApp:
 
         tk.Button(root, text="EXIT", width=30, bg="red", fg="white", command=root.quit).pack(pady=20)
 
-
         tk.Label(root, text="LEBL ARRIVALS (V2)", font=("Arial", 12, "bold"), fg="blue").pack(pady=10)
-        
+
         tk.Button(root, text="8. Load Arrivals (LEBL)", width=30, command=self.f_load_arrivals).pack(pady=5)
         tk.Button(root, text="9. Plot Arrivals Frequency", width=30, command=self.f_plot_arrivals).pack(pady=5)
         tk.Button(root, text="10. Save Flights to File", width=30, command=self.f_save_flights).pack(pady=5)
@@ -40,6 +38,7 @@ class AirportApp:
         tk.Button(root, text="12. Plot Flights by Type", width=35, command=self.f_plot_type).pack(pady=2)
 
         tk.Button(root, text="EXIT", width=30, bg="red", fg="white", command=root.quit).pack(pady=20)
+
     def f_load(self):
         self.lista_aeropuertos = load_airports("airports.txt")
         messagebox.showinfo("Success", "Loaded " + str(len(self.lista_aeropuertos)) + " airports.")
@@ -100,6 +99,7 @@ class AirportApp:
             messagebox.showinfo("Success", "Flights saved to 'saved_arrivals.txt'.")
         else:
             messagebox.showerror("Error", "List is empty, file not created.")
+
     def f_plot_airlines(self):
         if self.lista_vuelos:
             plot_airlines(self.lista_vuelos)
@@ -108,11 +108,13 @@ class AirportApp:
 
     def f_plot_type(self):
         if self.lista_vuelos:
-            plot_flights_type(self.lista_vuelos)
+            PlotFlightsType(self.lista_vuelos)
         else:
             messagebox.showerror("Error", "No flights loaded for Type plot.")
 
     # --- INICIO DE LA APLICACIÓN ---
+
+
 if __name__ == "__main__":
     ventana = tk.Tk()
     app = AirportApp(ventana)
