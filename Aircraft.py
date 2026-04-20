@@ -27,7 +27,7 @@ def load_arrivals(filename):
     f.close()
     return lista_arrivals
 
-def f_plot_arrivals(self):
+def plot_arrivals(self):
         
     if not self.lista_aeropuertos:
         print("Error", "No hay datos cargados.")
