@@ -155,8 +155,8 @@ def map_airports(airports):
 
 
 class Aircraft:
-    def __innit_(self,id,company,airport,time):
-        self.id = id
+    def __innit_(self,codigo,company,airport,time):
+        self.codigo = codigo
         self.company = company
         self.origin = origin
         self.time = time
