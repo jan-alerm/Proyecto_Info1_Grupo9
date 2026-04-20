@@ -182,7 +182,7 @@ def load_arrivals(filename):
     f.close()
     return lista_arrivals
 
-def PlotFlightsType(aircrafts):
+def plot_flights_type(aircrafts):
     if len(aircrafts) == 0:
         print("Error: The aircraft list is empty.")
         return False
