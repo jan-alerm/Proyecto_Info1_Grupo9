@@ -2,6 +2,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from airport import *
+from Aircraft import *
 
 class AirportApp:
     def __init__(self,root):
@@ -28,6 +29,14 @@ class AirportApp:
 
         tk.Button(root, text="EXIT", width=30, bg="red", fg="white", command=root.quit).pack(pady=20)
 
+
+        tk.Label(root, text="LEBL ARRIVALS (V2)", font=("Arial", 12, "bold"), fg="blue").pack(pady=10)
+        
+        tk.Button(root, text="8. Load Arrivals (LEBL)", width=30, command=self.f_load_arrivals).pack(pady=5)
+        tk.Button(root, text="9. Plot Arrivals Frequency", width=30, command=self.f_plot_arrivals).pack(pady=5)
+        tk.Button(root, text="10. Save Flights to File", width=30, command=self.f_save_flights).pack(pady=5)
+
+        tk.Button(root, text="EXIT", width=30, bg="red", fg="white", command=root.quit).pack(pady=20)
     def f_load(self):
         self.lista_aeropuertos = load_airports("airports.txt")
         messagebox.showinfo("Success", "Loaded " + str(len(self.lista_aeropuertos)) + " airports.")
@@ -68,6 +77,27 @@ class AirportApp:
             messagebox.showinfo("Success", "BIKF removed from memory.")
         else:
             messagebox.showerror("Error", "BIKF not found.")
+
+    def f_load_arrivals(self):
+        self.lista_vuelos = load_arrivals("arrivals.txt")
+        if self.lista_vuelos:
+            messagebox.showinfo("Success", f"Loaded {len(self.lista_vuelos)} aircraft arrivals.")
+        else:
+            messagebox.showwarning("Warning", "No arrivals loaded. Check 'arrivals.txt'.")
+
+    def f_plot_arrivals(self):
+        if self.lista_vuelos:
+            PlotArrivals(self.lista_vuelos)
+        else:
+            messagebox.showerror("Error", "No flight data to plot.")
+
+    def f_save_flights(self):
+        res = save_flights(self.lista_vuelos, "saved_arrivals.txt")
+        if res == 1:
+            messagebox.showinfo("Success", "Flights saved to 'saved_arrivals.txt'.")
+        else:
+            messagebox.showerror("Error", "List is empty, file not created.")
+
 
     # --- INICIO DE LA APLICACIÓN ---
 if __name__ == "__main__":
