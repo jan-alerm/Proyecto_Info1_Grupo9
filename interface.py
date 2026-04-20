@@ -108,7 +108,7 @@ class AirportApp:
 
     def f_plot_type(self):
         if self.lista_vuelos:
-            plot_flight_type(self.lista_vuelos)
+            plot_flights_type(self.lista_vuelos)
         else:
             messagebox.showerror("Error", "No flights loaded for Type plot.")
 
