@@ -1,10 +1,13 @@
 import matplotlib.pyplot as plt
+
+
 class Aircraft:
-    def __innit__(self,codigo,company,origin,time):
+    def __init__(self, codigo, company, origin, time):
         self.codigo = codigo
         self.company = company
         self.origin = origin
         self.time = time
+
 
 def load_arrivals(filename):
     f = open(filename, 'r')
@@ -20,53 +23,57 @@ def load_arrivals(filename):
             origen = elementos[1]
             tiempo = elementos[2]
             company = elementos[3]
-            nueva_llegada = Aircraft(codigo, company, origen, tiempo)
+            nueva_llegada = Aircraft(codigo,company,origen,tiempo)
             lista_arrivals.append(nueva_llegada)
             linea = f.readline()
 
     f.close()
     return lista_arrivals
 
-def plot_arrivals(lista_vols):
-    if len(lista_vols) == 0:
-        print("Error: No hay datos cargados.")
+
+def plot_arrivals(lista_de_vuelos):
+    if not lista_de_vuelos:
+        print("Error", "No hay datos cargados.")
         return False
 
     try:
-        horas_formato = [int(obj.time[:2]) for obj in lista_vols]
 
-        conthora = [0] * 24
+        horas_formato = []
+        for obj in lista_de_vuelos:
+            hora_str = obj.time.split(':')[0]
+            horas_formato.append(int(hora_str))
+
+        cont_hora = [0] * 24
         for hora in horas_formato:
             if 0 <= hora < 24:
-                conthora[hora] += 1
+                cont_hora[hora] += 1
 
         eje_x = list(range(24))
-        eje_y = conthora
+        eje_y = cont_hora
 
         plt.figure(figsize=(10, 5))
         plt.bar(eje_x, eje_y, color='blue', edgecolor='black')
-        plt.title("Arrivals per Hour")
-        plt.xlabel("Hour of the day")
-        plt.ylabel("Number of Aircraft")
-        plt.xticks(eje_x)
+        plt.title("Vuelos por Hora de Llegada")
+        plt.xlabel("Hora del día")
+        plt.ylabel("Cantidad de aviones")
+        plt.xticks(eje_x)  # Para que salgan todos los números del 0 al 23
         plt.grid(axis='y', linestyle='--', alpha=0.4)
 
         plt.show()
         return True
 
     except AttributeError:
-        print("Error: Los objetos no tienen el atributo '.time' (revisa el __init__)")
-        return False
+        print("Error", "Los objetos cargados no tienen el atributo '.time'")
 
 
-def save_flights(aircrafts,filename):
+def save_flights(aircrafts, filename):
     if not aircrafts:
         return False
     f = open(filename, 'w')
     f.write("AIRCRAFT ORIGIN ARRIVALS AIRLINE\n")
     for aircraft in aircrafts:
-        if aircraft.code:
-            aid = aircraft.code
+        if aircraft.codigo:
+            aid = aircraft.codigo
         else:
             aid = "-"
         if aircraft.origin:
@@ -85,6 +92,7 @@ def save_flights(aircrafts,filename):
         f.write(f"{aid} {origin} {time} {company}\n")
     f.close()
     return True
+
 
 def plot_airlines(lista_vols):
     if len(lista_vols) == 0:
@@ -120,6 +128,7 @@ def plot_airlines(lista_vols):
 
     plt.show()
     return True
+
 
 def PlotFlightsType(aircrafts):
     if len(aircrafts) == 0:
@@ -161,8 +170,4 @@ def PlotFlightsType(aircrafts):
     plt.show()
 
     return True
-
-
-
-
 
