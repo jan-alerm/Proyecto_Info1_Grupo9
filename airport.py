@@ -154,69 +154,7 @@ def map_airports(airports):
     print("Archivo 'airports_map.kml' creado. Ábrelo con Google Earth.")
 
 
-class Aircraft:
-    def __innit_(self,codigo,company,airport,time):
-        self.codigo = codigo
-        self.company = company
-        self.origin = origin
-        self.time = time
 
-def load_arrivals(filename):
-    f = open(filename, 'r')
-    lista_arrivals = []
-    f.readline()
-    linea = f.readline()
-
-    while linea != "":
-        elementos = linea.split()
-
-        if len(elementos) == 4:
-            codigo = elementos[0]
-            origen = elementos[1]
-            tiempo = elementos[2]
-            company = elementos[3]
-            nueva_llegada = Aircraft(codigo, company, origen, tiempo)
-            lista_arrivals.append(nueva_llegada)
-            linea = f.readline()
-
-    f.close()
-    return lista_arrivals
-
-def plot_flights_type(aircrafts):
-    if len(aircrafts) == 0:
-        print("Error: The aircraft list is empty.")
-        return False
-
-    schengen_prefixes = [
-        'LO', 'EB', 'LK', 'LC', 'EK', 'EE', 'EF', 'LF', 'ED', 'LG', 'EH', 'LH', 'BI',
-        'LI', 'EV', 'EY', 'EL', 'LM', 'EN', 'EP', 'LP', 'LZ', 'LJ', 'LE', 'ES', 'LS'
-    ]
-
-    total_schengen = 0
-    total_no_schengen = 0
-
-    for avion in aircrafts:
-        prefijo = avion.origin[:2]
-
-        if prefijo in schengen_prefixes:
-            total_schengen += 1
-        else:
-            total_no_schengen += 1
-
-    ejes_x = ['Schengen', 'Non-Schengen']
-    ejes_y = [total_schengen, total_no_schengen]
-
-    plt.figure(figsize=(8, 6))
-    colores = ['green', 'red']
-
-    plt.bar(ejes_x, ejes_y, color=colores, edgecolor='black')
-
-    plt.title("Total Flights by Origin Type")
-    plt.xlabel("Type of Origin")
-    plt.ylabel("Number of Aircraft")
-
-    for i in range(len(ejes_y)):
-        plt.text(i, ejes_y[i] + 0.1, str(ejes_y[i]), ha='center', va='bottom', fontsize=12)
 
     plt.grid(axis='y', linestyle='--', alpha=0.3)
     plt.show()
