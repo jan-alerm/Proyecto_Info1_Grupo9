@@ -87,7 +87,7 @@ def save_flights(aircrafts,filename):
     f.close()
     return True
 
-def plot_airlines_stats(lista_vols):
+def plot_airlines(lista_vols):
     if len(lista_vols) == 0:
         print("Error: The vector is empty.")
         return False
