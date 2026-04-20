@@ -27,37 +27,36 @@ def load_arrivals(filename):
     f.close()
     return lista_arrivals
 
-def plot_arrivals(self):
-        
-    if not self.lista_aeropuertos:
-        print("Error", "No hay datos cargados.")
+def plot_arrivals(lista_vols):
+    if len(lista_vols) == 0:
+        print("Error: No hay datos cargados.")
         return False
 
     try:
+        horas_formato = [int(obj.time[:2]) for obj in lista_vols]
 
-        horas_formato = [int(obj.time[:2]) for obj in self.lista_aeropuertos]
-
-        cont_hora = [0] * 24
+        conthora = [0] * 24
         for hora in horas_formato:
             if 0 <= hora < 24:
-                cont_hora[hora] += 1
+                conthora[hora] += 1
 
         eje_x = list(range(24))
-        eje_y = cont_hora
+        eje_y = conthora
 
         plt.figure(figsize=(10, 5))
         plt.bar(eje_x, eje_y, color='blue', edgecolor='black')
-        plt.title("Vuelos por Hora de Llegada")
-        plt.xlabel("Hora del día")
-        plt.ylabel("Cantidad de aviones")
-        plt.xticks(eje_x)  # Para que salgan todos los números del 0 al 23
+        plt.title("Arrivals per Hour")
+        plt.xlabel("Hour of the day")
+        plt.ylabel("Number of Aircraft")
+        plt.xticks(eje_x)
         plt.grid(axis='y', linestyle='--', alpha=0.4)
 
         plt.show()
         return True
-        
+
     except AttributeError:
-        print("Error", "Los objetos cargados no tienen el atributo '.time'")
+        print("Error: Los objetos no tienen el atributo '.time' (revisa el __init__)")
+        return False
 
 
 def save_flights(aircrafts,filename):
