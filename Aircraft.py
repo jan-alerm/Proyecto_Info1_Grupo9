@@ -1,4 +1,4 @@
-
+import matplotlib.pyplot as plt
 class Aircraft:
     def __innit_(self,codigo,company,airport,time):
         self.codigo = codigo
@@ -30,7 +30,7 @@ def load_arrivals(filename):
 def f_plot_arrivals(self):
         
     if not self.lista_aeropuertos:
-        messagebox.showwarning("Error", "No hay datos cargados. Usa el botón 1 primero.")
+        print("Error", "No hay datos cargados.")
         return
 
     try:
@@ -56,4 +56,13 @@ def f_plot_arrivals(self):
         plt.show()
 
     except AttributeError:
-        messagebox.showerror("Error", "Los objetos cargados no tienen el atributo '.time'")
+        print("Error", "Los objetos cargados no tienen el atributo '.time'")
+
+
+#aqui va la teva part jan
+
+
+
+
+
+
