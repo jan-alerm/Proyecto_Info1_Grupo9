@@ -31,7 +31,7 @@ def f_plot_arrivals(self):
         
     if not self.lista_aeropuertos:
         print("Error", "No hay datos cargados.")
-        return
+        return False
 
     try:
 
@@ -54,7 +54,8 @@ def f_plot_arrivals(self):
         plt.grid(axis='y', linestyle='--', alpha=0.4)
 
         plt.show()
-
+        return True
+        
     except AttributeError:
         print("Error", "Los objetos cargados no tienen el atributo '.time'")
 
@@ -84,6 +85,41 @@ def save_flights(aircrafts,filename):
 
         f.write(f"{aid} {origin} {time} {company}\n")
     f.close()
+    return True
+
+def plot_airlines_stats(lista_vols):
+    if len(lista_vols) == 0:
+        print("Error: The vector is empty.")
+        return False
+
+    nombres_agencias = []
+    conteos = []
+
+    for avion in lista_vols:
+        agencia_actual = avion.company
+
+        encontrado = False
+        i = 0
+        while i < len(nombres_agencias):
+            if nombres_agencias[i] == agencia_actual:
+                conteos[i] += 1
+                encontrado = True
+            i += 1
+
+        if not encontrado:
+            nombres_agencias.append(agencia_actual)
+            conteos.append(1)
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(nombres_agencias, conteos, color='orange', edgecolor='black')
+
+    plt.title("Airlines Statistics")
+    plt.xlabel("Agencies")
+    plt.ylabel("Number of Aircraft")
+    plt.xticks(rotation=45)
+    plt.grid(axis='y', linestyle='--', alpha=0.3)
+
+    plt.show()
     return True
 
 
