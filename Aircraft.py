@@ -59,7 +59,33 @@ def f_plot_arrivals(self):
         print("Error", "Los objetos cargados no tienen el atributo '.time'")
 
 
-#aqui va la teva part jan
+def save_flights(aircrafts,filename):
+    if not aircrafts:
+        return False
+    f = open(filename, 'w')
+    f.write("AIRCRAFT ORIGIN ARRIVALS AIRLINE\n")
+    for aircraft in aircrafts:
+        if aircraft.code:
+            aid = aircraft.code
+        else:
+            aid = "-"
+        if aircraft.origin:
+            origin = aircraft.origin
+        else:
+            origin = "-"
+        if aircraft.time:
+            time = aircraft.time
+        else:
+            time = "-"
+        if aircraft.company:
+            company = aircraft.company
+        else:
+            company = "-"
+
+        f.write(f"{aid} {origin} {time} {company}\n")
+    f.close()
+    return True
+
 
 
 
