@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 class Aircraft:
-    def __innit_(self,codigo,company,airport,time):
+    def __innit__(self,codigo,company,origin,time):
         self.codigo = codigo
         self.company = company
         self.origin = origin
