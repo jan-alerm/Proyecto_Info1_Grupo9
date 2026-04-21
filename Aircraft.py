@@ -171,3 +171,57 @@ def PlotFlightsType(aircrafts):
 
     return True
 
+def map_flights (aircrafts, airports):
+    f = open('airports_map.kml', 'w')
+    f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+    f.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n')
+    f.write('<Document>\n')                                     
+
+    lat_lebl = 41.297445
+    lon_lebl = 2.0832941
+
+    i = 0
+    while i < len(aircrafts):
+        avion = aircrafts[i]
+        
+        j = 0
+        encontrado = False
+        while j < len(airports):
+            if airports[j].code == avion.origin:                
+                origen = airports[j]
+                encontrado = True
+            j += 1
+        if not encontrado:
+            i += 1
+            continue
+
+        prefix = avion.origin[:2]                                                   # esto es lo mismo que al principip
+        schengen_prefixes = [
+            'LO','EB','LK','LC','EK','EE','EF','LF','ED','LG','EH','LH','BI',
+            'LI','EV','EY','EL','LM','EN','EP','LP','LZ','LJ','LE','ES','LS'
+        ]
+        if prefix in schengen_prefixes:
+            color = "ff0000ff"   # azul
+        else:
+            color = "ff00ff00"   # verde  
+
+        f.write('<Placemark>\n')
+        f.write('<Style><LineStyle><color>' + color + '</color></LineStyle></Style>\n')
+        f.write('<LineString>\n')
+        f.write('<coordinates>\n')
+
+        f.write(str(origen.lon) + "," + str(origen.lat) + "\n")
+        f.write(str(lon_lebl) + "," + str(lat_lebl) + "\n")
+
+        f.write('</coordinates>\n')
+        f.write('</LineString>\n')
+        f.write('</Placemark>\n')
+
+        i += 1 
+
+write('</Document>\n')
+    f.write('</kml>\n')
+
+    f.close()
+
+    print("Archivo flights_map.kml creado")
