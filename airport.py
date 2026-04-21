@@ -1,9 +1,9 @@
 
-
 class Airport:
-    def __init__(self,code,lat,lon):
+    def __init__(self, code, lat, lon):
         self.code = code
-        self.coordinates =(lat,lon)
+        self.lat = lat
+        self.lon = lon
         self.schengen = False
 
 def is_schengen_airport(code):
@@ -27,7 +27,7 @@ def print_airport(airport):
         status = "No"
     print("---Airport Data---")
     print("ICAO Code: ",airport.code)
-    print("Coordinates: ",airport.coordinates[0],airport.coordinates[1])
+    print("Coordinates: ", airport.lat, airport.lon)
     print("Schengen: ",status)
 
 import os
@@ -51,7 +51,7 @@ def load_airports(filename):
             minutos = float(lat_str[3:5])
             segundos = float(lat_str[5:7])
             lat_decimal = grados + (minutos / 60) + (segundos / 3600)
-            if lat_str[0] == "S" or lat_str == "W":
+            if lat_str[0] == "S" or lat_str[0] == "W":
                 lat_decimal = -lat_decimal
 
             grados_lon = float(lon_str[1:4])
@@ -84,7 +84,7 @@ def save_schengen_airports(airports, filename):
     while i < len(airports):
         a = airports[i]
         if a.schengen == True:
-            f.write(a.code + " " + str(a.coordinates[0]) + " " + str(a.coordinates[1]) + "\n")
+            f.write(a.code + " " + str(a.lat) + " " + str(a.lon) + "\n")
         i += 1
     f.close()
     return 1
@@ -124,7 +124,7 @@ def plot_airports(airports):
     labels = ["Airports"]
     plt.bar(labels,[schengen],label="Schengen",color="blue")
     plt.bar(labels,[not_schengen],bottom=[schengen],label="Not schengen",color="red")
-    plt.ylabel("Number of airports")
+    plt.ylabel("Number of airports.txt")
     plt.title("Schengen vs Not schengen")
     plt.legend()
     plt.show()
@@ -132,7 +132,7 @@ def plot_airports(airports):
 def map_airports(airports):
     f = open("airports_map.kml","w")
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-    f.write('<kml xmlns="https://www.opengis.net/kml/2.2">\n')
+    f.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n')
     f.write('<Document>\n')
     i = 0
     while i < len(airports):
@@ -143,13 +143,12 @@ def map_airports(airports):
         f.write('<Placemark>\n')
         f.write('  <name>' + a.code + '</name>\n')
         f.write('  <Point>\n')
-        f.write('    <coordinates>' + str(a.coordinates[1]) + ',' + str(a.coordinates[0]) + '</coordinates>\n')
+        f.write('    <coordinates>' + str(a.lon) + ',' + str(a.lat) + '</coordinates>\n')
         f.write('  </Point>\n')
         f.write('</Placemark>\n')
-        i =+ 1
+        i += 1
 
     f.write('</Document>\n')
     f.write('</kml>\n')
     f.close()
     print("Archivo 'airports_map.kml' creado. Ábrelo con Google Earth.")
-
