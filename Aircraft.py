@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 
-
 class Aircraft:
     def __init__(self, codigo, company, origin, time):
         self.codigo = codigo
@@ -23,7 +22,7 @@ def load_arrivals(filename):
             origen = elementos[1]
             tiempo = elementos[2]
             company = elementos[3]
-            nueva_llegada = Aircraft(codigo,company,origen,tiempo)
+            nueva_llegada = Aircraft(codigo, company, origen, tiempo)
             lista_arrivals.append(nueva_llegada)
             linea = f.readline()
 
@@ -119,12 +118,12 @@ def plot_airlines(lista_vols):
 
     plt.figure(figsize=(10, 5))
     plt.bar(nombres_agencias, conteos, color='orange', edgecolor='black')
-    plt.xticks(fontsize=5)
+
     plt.title("Airlines Statistics")
     plt.xlabel("Agencies")
     plt.ylabel("Number of Aircraft")
     plt.xticks(rotation=45)
-    plt.grid(axis='y', linestyle='--', alpha=0.2)
+    plt.grid(axis='y', linestyle='--', alpha=0.3)
 
     plt.show()
     return True
@@ -172,12 +171,11 @@ def PlotFlightsType(aircrafts):
     return True
 
 
-
-def map_flights (aircrafts, airports):
-    f = open('airports_map.kml', 'w')
+def map_flights(aircrafts, airports):
+    f = open('flights_map.kml', 'w')
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     f.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n')
-    f.write('<Document>\n')                                     
+    f.write('<Document>\n')
 
     lat_lebl = 41.297445
     lon_lebl = 2.0832941
@@ -185,11 +183,11 @@ def map_flights (aircrafts, airports):
     i = 0
     while i < len(aircrafts):
         avion = aircrafts[i]
-        
+
         j = 0
         encontrado = False
         while j < len(airports):
-            if airports[j].code == avion.origin:                
+            if airports[j].code == avion.origin:
                 origen = airports[j]
                 encontrado = True
             j += 1
@@ -197,19 +195,20 @@ def map_flights (aircrafts, airports):
             i += 1
             continue
 
-        prefix = avion.origin[:2]                                                   # esto es lo mismo que al principip
+        prefix = avion.origin[:2]  # esto es lo mismo que al principip
         schengen_prefixes = [
-            'LO','EB','LK','LC','EK','EE','EF','LF','ED','LG','EH','LH','BI',
-            'LI','EV','EY','EL','LM','EN','EP','LP','LZ','LJ','LE','ES','LS'
+            'LO', 'EB', 'LK', 'LC', 'EK', 'EE', 'EF', 'LF', 'ED', 'LG', 'EH', 'LH', 'BI',
+            'LI', 'EV', 'EY', 'EL', 'LM', 'EN', 'EP', 'LP', 'LZ', 'LJ', 'LE', 'ES', 'LS'
         ]
         if prefix in schengen_prefixes:
-            color = "ff0000ff"   # azul
+            color = "ffff0000"  # azul
         else:
-            color = "ff00ff00"   # verde  
+            color = "ff00ff00"  # verde
 
         f.write('<Placemark>\n')
-        f.write('<Style><LineStyle><color>' + color + '</color></LineStyle></Style>\n')
+        f.write('<Style><LineStyle><color>' + color + '</color><width>3</width></LineStyle></Style>\n')             # hace que las lineas sean bien visibles
         f.write('<LineString>\n')
+        f.write('<tessellate>1</tessellate>\n')                 # mejorar las líneas, la curvatura
         f.write('<coordinates>\n')
 
         f.write(str(origen.lon) + "," + str(origen.lat) + "\n")
@@ -219,51 +218,58 @@ def map_flights (aircrafts, airports):
         f.write('</LineString>\n')
         f.write('</Placemark>\n')
 
-        i += 1 
+        i += 1
 
-write('</Document>\n')
+
+    f.write('</Document>\n')
     f.write('</kml>\n')
 
     f.close()
 
     print("Archivo flights_map.kml creado")
 
-#--------------------------------------------------- HAVERSINE DISTANCE ------------------------------------------------
+    import os
+    os.startfile("flights_map.kml")
+
+# --------------------------------------------------- HAVERSINE DISTANCE ------------------------------------------------
 import math
-def Haversine (lat1, lon1, lat2, lon2):
-    R = 6371                                        # radio tierra
-    lat1 = math.radians(lat1)                       # es importante que los angulos RADIANES
+
+
+def Haversine(lat1, lon1, lat2, lon2):
+    R = 6371  # radio tierra
+    lat1 = math.radians(lat1)  # es importante que los angulos RADIANES
     lon1 = math.radians(lon1)
     lat2 = math.radians(lat2)
     lon2 = math.radians(lon2)
 
-    dif_lat = lat2 - lat1                          #calcular la distancia angular entre puntos
+    dif_lat = lat2 - lat1  # calcular la distancia angular entre puntos
     dif_lon = lon2 - lon1
 
-    #fórmula
+    # fórmula
     a = math.sin(dif_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dif_lon / 2) ** 2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return R * c
 
-#------------------------------------------------ LONG DISTANCE ARRIVALS -----------------------------------------------
-def long_distance_arrivals (aircrafts, airports):
-# teniendo en cuenta la lista de aeropuertos y de aviones
-# devuelve una lista de flights que llegan a LEBL desde un aeropuerto +2000km (special inspection)
-    lista_long_flights  =[]
+
+# ------------------------------------------------ LONG DISTANCE ARRIVALS -----------------------------------------------
+def long_distance_arrivals(aircrafts, airports):
+    # teniendo en cuenta la lista de aeropuertos y de aviones
+    # devuelve una lista de flights que llegan a LEBL desde un aeropuerto +2000km (special inspection)
+    lista_long_flights = []
     i = 0
-    #coordenadas base de LEBL (BARCELONA)
+    # coordenadas base de LEBL (BARCELONA)
     lat_lebl = 41.297445
     lon_lebl = 2.0832941
 
-    while i < len(aircrafts):               # primero miraremos los vuelos uno a uno
-        avion = aircrafts[i]                # "primer" avión a mirar
+    while i < len(aircrafts):  # primero miraremos los vuelos uno a uno
+        avion = aircrafts[i]  # "primer" avión a mirar
 
-        j = 0                               # esto hará que busque el aeropuerto de origen
+        j = 0  # esto hará que busque el aeropuerto de origen
         encontrado = False
-        while j < len(airports):            # recorrido de los aeropuertos
-            if airports[j].code == avion.origin:            # este aeropuerte = origen avión?
-                origen = airports[j]                        # si --> true, guarda el aeropuerto (+ coordenadas)
+        while j < len(airports):  # recorrido de los aeropuertos
+            if airports[j].code == avion.origin:  # este aeropuerte = origen avión?
+                origen = airports[j]  # si --> true, guarda el aeropuerto (+ coordenadas)
                 encontrado = True
             j += 1
 
