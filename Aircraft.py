@@ -225,3 +225,56 @@ write('</Document>\n')
     f.close()
 
     print("Archivo flights_map.kml creado")
+
+#--------------------------------------------------- HAVERSINE DISTANCE ------------------------------------------------
+import math
+def Haversine (lat1, lon1, lat2, lon2):
+    R = 6371                                        # radio tierra
+    lat1 = math.radians(lat1)                       # es importante que los angulos RADIANES
+    lon1 = math.radians(lon1)
+    lat2 = math.radians(lat2)
+    lon2 = math.radians(lon2)
+
+    dif_lat = lat2 - lat1                          #calcular la distancia angular entre puntos
+    dif_lon = lon2 - lon1
+
+    #fórmula
+    a = math.sin(dif_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dif_lon / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return R * c
+
+#------------------------------------------------ LONG DISTANCE ARRIVALS -----------------------------------------------
+def long_distance_arrivals (aircrafts, airports):
+# teniendo en cuenta la lista de aeropuertos y de aviones
+# devuelve una lista de flights que llegan a LEBL desde un aeropuerto +2000km (special inspection)
+    lista_long_flights  =[]
+    i = 0
+    #coordenadas base de LEBL (BARCELONA)
+    lat_lebl = 41.297445
+    lon_lebl = 2.0832941
+
+    while i < len(aircrafts):               # primero miraremos los vuelos uno a uno
+        avion = aircrafts[i]                # "primer" avión a mirar
+
+        j = 0                               # esto hará que busque el aeropuerto de origen
+        encontrado = False
+        while j < len(airports):            # recorrido de los aeropuertos
+            if airports[j].code == avion.origin:            # este aeropuerte = origen avión?
+                origen = airports[j]                        # si --> true, guarda el aeropuerto (+ coordenadas)
+                encontrado = True
+            j += 1
+
+        if not encontrado:
+            i += 1
+            continue
+
+        distancia = Haversine(origen.lat, origen.lon, lat_lebl, lon_lebl)
+        # aquí ya se entiende que si no hay aeropuerto = origen no guarda la lon o lat
+
+        if distancia > 2000:
+            lista_long_flights.append(avion)
+
+        i += 1
+
+    return lista_long_flights
