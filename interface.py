@@ -34,13 +34,13 @@ class AirportApp:
         tk.Button(root, text="Plot Arrivals Frequency", width=30, command=self.f_plot_arrivals).pack(pady=5)
         tk.Button(root, text="Save Flights to File", width=30, command=self.f_save_flights).pack(pady=5)
 
-        tk.Button(root, text="Plot Flights per Airline", width=35, command=self.f_plot_airlines).pack(pady=2)
-        tk.Button(root, text="Plot Flights by Type", width=35, command=self.f_plot_type).pack(pady=2)
+        tk.Button(root, text="Plot Flights per Airline", width=30, command=self.f_plot_airlines).pack(pady=2)
+        tk.Button(root, text="Plot Flights by Type", width=30, command=self.f_plot_type).pack(pady=2)
 
         # BOTONES
-        tk.Button(self.root, text="13. Show Flight Trajectories", width=35, command=self.f_map_flights).pack(pady=2)
+        tk.Button(self.root, text="13. Show Flight Trajectories", width=30, command=self.f_map_flights).pack(pady=2)
 
-        tk.Button(self.root, text="14. Show Long Distance Flights", width=35, command=self.f_long_flights).pack(pady=2)
+        tk.Button(self.root, text="14. Show Long Distance Flights", width=30, command=self.f_long_flights).pack(pady=2)
 
         tk.Button(root, text="EXIT", width=30, bg="red", fg="white", command=root.quit).pack(pady=20)
 
