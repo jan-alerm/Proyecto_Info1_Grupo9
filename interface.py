@@ -39,6 +39,11 @@ class AirportApp:
 
         tk.Button(root, text="EXIT", width=30, bg="red", fg="white", command=root.quit).pack(pady=20)
 
+    # BOTONES
+        tk.Button(self.root, text="13. Show Flight Trajectories", width=35, command=self.f_map_flights).pack(pady=2)
+
+        tk.Button(self.root, text="14. Show Long Distance Flights", width=35, command=self.f_long_flights).pack(pady=2)
+
     def f_load(self):
         self.lista_aeropuertos = load_airports("airports.txt")
         messagebox.showinfo("Success", "Loaded " + str(len(self.lista_aeropuertos)) + " airports.")
@@ -111,6 +116,24 @@ class AirportApp:
             PlotFlightsType(self.lista_vuelos)
         else:
             messagebox.showerror("Error", "No flights loaded for Type plot.")
+
+----------------------------------------------PAULA-------------------------------------------------------
+    def f_map_flights(self):
+        if self.lista_vuelos and self.lista_aeropuertos:
+            map_flights(self.lista_vuelos, self.lista_aeropuertos)
+            messagebox.showinfo("Success", "Flights map created.")
+        else:
+            messagebox.showerror("Error", "Load airports and flights first.")
+
+
+    def f_long_flights(self):
+        if self.lista_vuelos and self.lista_aeropuertos:
+            largos = long_distance_arrivals(self.lista_vuelos, self.lista_aeropuertos)
+            map_flights(largos, self.lista_aeropuertos)
+            messagebox.showinfo("Success", "Long distance flights map created.")
+        else:
+            messagebox.showerror("Error", "Load airports and flights first.")
+----------------------------------------------------------------------------------------------------------
 
     # --- INICIO DE LA APLICACIÓN ---
 
