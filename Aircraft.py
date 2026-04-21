@@ -119,12 +119,12 @@ def plot_airlines(lista_vols):
 
     plt.figure(figsize=(10, 5))
     plt.bar(nombres_agencias, conteos, color='orange', edgecolor='black')
-
+    plt.xticks(fontsize=5)
     plt.title("Airlines Statistics")
     plt.xlabel("Agencies")
     plt.ylabel("Number of Aircraft")
     plt.xticks(rotation=45)
-    plt.grid(axis='y', linestyle='--', alpha=0.3)
+    plt.grid(axis='y', linestyle='--', alpha=0.2)
 
     plt.show()
     return True
@@ -170,6 +170,8 @@ def PlotFlightsType(aircrafts):
     plt.show()
 
     return True
+
+
 
 def map_flights (aircrafts, airports):
     f = open('airports_map.kml', 'w')
