@@ -1,42 +1,41 @@
+from airport import *
 from Aircraft import *
 import tkinter as tk
-
+from tkinter import messagebox
 
 class AirportApp:
     def __init__(self, root):
         self.lista_vuelos = []
         self.root = root
         self.root.title("Airport Manager v1.0")
-        self.root.geometry("400x500")
+        self.root.geometry("500x800")
         self.lista_aeropuertos = []
 
 
         tk.Label(root, text="AIRPORT MANAGEMENT SYSTEM", font=("Arial", 14, "bold")).pack(pady=10)
 
-        tk.Button(root, text="1. Load Airports from File", width=30, command=self.f_load).pack(pady=5)
+        tk.Button(root, text="Load Airports from File", width=30, command=self.f_load).pack(pady=5)
 
-        tk.Button(root, text="2. Set Schengen Attribute", width=30, command=self.f_schengen).pack(pady=5)
+        tk.Button(root, text="Set Schengen Attribute", width=30, command=self.f_schengen).pack(pady=5)
 
-        tk.Button(root, text="3. Show Data (Console)", width=30, command=self.f_show).pack(pady=5)
+        tk.Button(root, text="Show Data (Console)", width=30, command=self.f_show).pack(pady=5)
 
-        tk.Button(root, text="4. Save Schengen to File", width=30, command=self.f_save).pack(pady=5)
+        tk.Button(root, text="Save Schengen to File", width=30, command=self.f_save).pack(pady=5)
 
-        tk.Button(root, text="5. Plot Schengen Stats", width=30, command=self.f_plot).pack(pady=5)
+        tk.Button(root, text="Plot Schengen Stats", width=30, command=self.f_plot).pack(pady=5)
 
-        tk.Button(root, text="6. Show in Google Earth", width=30, command=self.f_map).pack(pady=5)
+        tk.Button(root, text="Show in Google Earth", width=30, command=self.f_map).pack(pady=5)
 
-        tk.Button(root, text="7. Delete Airport (BIKF)", width=30, command=self.f_delete).pack(pady=5)
+        tk.Button(root, text="Delete Airport (BIKF)", width=30, command=self.f_delete).pack(pady=5)
 
-        tk.Button(root, text="EXIT", width=30, bg="red", fg="white", command=root.quit).pack(pady=20)
+        tk.Label(root, text="ARRIVALS (V2)", font=("Arial", 12, "bold"), fg="blue").pack(pady=10)
 
-        tk.Label(root, text="LEBL ARRIVALS (V2)", font=("Arial", 12, "bold"), fg="blue").pack(pady=10)
+        tk.Button(root, text="Load Arrivals (LEBL)", width=30, command=self.f_load_arrivals).pack(pady=5)
+        tk.Button(root, text="Plot Arrivals Frequency", width=30, command=self.f_plot_arrivals).pack(pady=5)
+        tk.Button(root, text="Save Flights to File", width=30, command=self.f_save_flights).pack(pady=5)
 
-        tk.Button(root, text="8. Load Arrivals (LEBL)", width=30, command=self.f_load_arrivals).pack(pady=5)
-        tk.Button(root, text="9. Plot Arrivals Frequency", width=30, command=self.f_plot_arrivals).pack(pady=5)
-        tk.Button(root, text="10. Save Flights to File", width=30, command=self.f_save_flights).pack(pady=5)
-
-        tk.Button(root, text="11. Plot Flights per Airline", width=35, command=self.f_plot_airlines).pack(pady=2)
-        tk.Button(root, text="12. Plot Flights by Type", width=35, command=self.f_plot_type).pack(pady=2)
+        tk.Button(root, text="Plot Flights per Airline", width=35, command=self.f_plot_airlines).pack(pady=2)
+        tk.Button(root, text="Plot Flights by Type", width=35, command=self.f_plot_type).pack(pady=2)
 
         tk.Button(root, text="EXIT", width=30, bg="red", fg="white", command=root.quit).pack(pady=20)
 
