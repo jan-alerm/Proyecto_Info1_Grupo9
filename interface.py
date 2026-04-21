@@ -1,5 +1,5 @@
 from airport import *
-from Aircraft import *
+from aircraft import *
 import tkinter as tk
 from tkinter import messagebox
 
@@ -37,16 +37,17 @@ class AirportApp:
         tk.Button(root, text="Plot Flights per Airline", width=35, command=self.f_plot_airlines).pack(pady=2)
         tk.Button(root, text="Plot Flights by Type", width=35, command=self.f_plot_type).pack(pady=2)
 
-        tk.Button(root, text="EXIT", width=30, bg="red", fg="white", command=root.quit).pack(pady=20)
-
-    # BOTONES
+        # BOTONES
         tk.Button(self.root, text="13. Show Flight Trajectories", width=35, command=self.f_map_flights).pack(pady=2)
 
         tk.Button(self.root, text="14. Show Long Distance Flights", width=35, command=self.f_long_flights).pack(pady=2)
 
+        tk.Button(root, text="EXIT", width=30, bg="red", fg="white", command=root.quit).pack(pady=20)
+
+
     def f_load(self):
         self.lista_aeropuertos = load_airports("airports.txt")
-        messagebox.showinfo("Success", "Loaded " + str(len(self.lista_aeropuertos)) + " airports.")
+        messagebox.showinfo("Success", "Loaded " + str(len(self.lista_aeropuertos)) + " airports.txt.")
 
     def f_schengen(self):
         i = 0
@@ -88,9 +89,9 @@ class AirportApp:
     def f_load_arrivals(self):
         self.lista_vuelos = load_arrivals("arrivals.txt")
         if self.lista_vuelos:
-            messagebox.showinfo("Success", f"Loaded {len(self.lista_vuelos)} aircraft arrivals.")
+            messagebox.showinfo("Success", f"Loaded {len(self.lista_vuelos)} aircraft arrivals.txt.")
         else:
-            messagebox.showwarning("Warning", "No arrivals loaded. Check 'arrivals.txt'.")
+            messagebox.showwarning("Warning", "No arrivals.txt loaded. Check 'arrivals.txt.txt'.")
 
     def f_plot_arrivals(self):
         if self.lista_vuelos:
@@ -117,13 +118,13 @@ class AirportApp:
         else:
             messagebox.showerror("Error", "No flights loaded for Type plot.")
 
-----------------------------------------------PAULA-------------------------------------------------------
+#--------------------------------------------------------PAULA----------------------------------------------------------
     def f_map_flights(self):
         if self.lista_vuelos and self.lista_aeropuertos:
             map_flights(self.lista_vuelos, self.lista_aeropuertos)
             messagebox.showinfo("Success", "Flights map created.")
         else:
-            messagebox.showerror("Error", "Load airports and flights first.")
+            messagebox.showerror("Error", "Load airports.txt and flights first.")
 
 
     def f_long_flights(self):
@@ -132,8 +133,8 @@ class AirportApp:
             map_flights(largos, self.lista_aeropuertos)
             messagebox.showinfo("Success", "Long distance flights map created.")
         else:
-            messagebox.showerror("Error", "Load airports and flights first.")
-----------------------------------------------------------------------------------------------------------
+            messagebox.showerror("Error", "Load airports.txt and flights first.")
+#-----------------------------------------------------------------------------------------------------------------------
 
     # --- INICIO DE LA APLICACIÓN ---
 
