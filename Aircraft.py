@@ -116,13 +116,14 @@ def plot_airlines(lista_vols):
             nombres_agencias.append(agencia_actual)
             conteos.append(1)
 
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(18, 5))
     plt.bar(nombres_agencias, conteos, color='orange', edgecolor='black')
 
     plt.title("Airlines Statistics")
     plt.xlabel("Agencies")
     plt.ylabel("Number of Aircraft")
     plt.xticks(rotation=45)
+    plt.xticks(fontsize=6)
     plt.grid(axis='y', linestyle='--', alpha=0.3)
 
     plt.show()
