@@ -1,10 +1,13 @@
 --------------------------------------------------------------------------------------------------------------------------------
 PROYECTO INFORMÁTICA GRUPO 9
+integrantes: Pol Molinas Casals, Jan Alerm Foz, Paula Segade Gómez
 ---------------------------------------------------------------------------------------------------------------------------------
-VIDEO VERSIÓN 2:
-https://youtu.be/gD7xKUEf3dc?si=CJCJHBE4vAOMcZxA
+VERSIÓN 2:
+
+enlace del video: https://youtu.be/gD7xKUEf3dc?si=CJCJHBE4vAOMcZxA
 ---------------------------------------------------------------------------------------------------------------------------------
-VIDEO VERSIÓN 1:
-https://youtu.be/Q-O5uTIxN5I?si=8kMMjufk7dBEuVWJ
+VERSIÓN 1:
+
+enlace del video: https://youtu.be/Q-O5uTIxN5I?si=8kMMjufk7dBEuVWJ
 ----------------------------------------------------------------------------------------------------------------------------------
 
