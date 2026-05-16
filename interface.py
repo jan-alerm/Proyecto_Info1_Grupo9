@@ -10,8 +10,9 @@ from Aircraft import *
 
 class AirportApp:
     def __init__(self, root):
+        
         self.root = root
-        self.root.title("EETAC - Advanced Dynamic Dashboard v3.1")
+        self.root.title("Proyecto de Informática I - Grupo 9")
         self.root.geometry("1300x900")
         self.root.configure(bg="#f4f6f7")
 
@@ -22,6 +23,7 @@ class AirportApp:
         # CAMBIO: Ahora los apartados inician cerrados (False)
         self.airports_visible = False
         self.flights_visible = False
+        self.gates_visible = False
 
         # --- ESTILOS ---
         self.style = ttk.Style()
@@ -130,6 +132,13 @@ class AirportApp:
         ttk.Button(self.flights_content, text="Filtrar Larga Distancia (>2000km)", width=33,
                    command=self.f_long_flights).pack(pady=2, padx=5)
 
+        # ================= SECCIÓN 3: GATE MANAGEMENT =================
+
+        self.btn_toggle_gates = ttk.Button(self.button_frame, text="▲ ADMINISTRADOR DE PUERTAS",
+                                              style="Toggle.TButton", width=35, command=self.toggle_gates_panel)
+        self.btn_toggle_gates.pack(fill="x", pady=(5, 0))
+
+
         # Botón de salida global fijado abajo del frame
         ttk.Button(self.button_frame, text="SALIR DE LA APLICACIÓN", width=35, command=self.root.quit).pack(
             side="bottom", pady=15)
@@ -156,6 +165,16 @@ class AirportApp:
             self.flights_content.pack(fill="x", padx=2, pady=(0, 10), after=self.btn_toggle_flights)
             self.btn_toggle_flights.configure(text="▼ OPERACIONES Y TRÁFICO")
             self.flights_visible = True
+
+    def toggle_gates_panel(self):
+        if self.gates_visible:
+            self.gates_content.pack_forget()
+            self.btn_toggle_gates.configure(text="▲ ADMINISTRADOR DE PUERTAS")
+            self.gates_visible = False
+        else:
+            self.gates_content.pack(fill="x", padx=2, pady=(0, 10), after=self.btn_toggle_gates)
+            self.btn_toggle_gates.configure(text="▼ ADMINISTRADOR DE PUERTAS")
+            self.gates_visible = True
 
     # --- LÓGICA DE ACTUALIZACIÓN Y LIMPIEZA ---
     def update_status(self):
