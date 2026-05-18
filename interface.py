@@ -2,9 +2,11 @@
 # SECCIÓN 1: IMPORTACIÓN DE LIBRERÍAS Y MÓDULOS DEL PROYECTO
 # =====================================================================================
 import tkinter as tk  # Librería base para la interfaz gráfica (ventanas, botones, frames)
-from tkinter import messagebox, filedialog, ttk  # Componentes avanzados (cuadros de diálogo, selector de archivos, estilos)
+from tkinter import messagebox, filedialog, \
+    ttk  # Componentes avanzados (cuadros de diálogo, selector de archivos, estilos)
 import matplotlib.pyplot as plt  # Librería para generar gráficos de barras y frecuencias
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # Permite incrustar gráficos de Matplotlib directamente dentro de Tkinter
+from matplotlib.backends.backend_tkagg import \
+    FigureCanvasTkAgg  # Permite incrustar gráficos de Matplotlib directamente dentro de Tkinter
 
 # Importación de funciones lógicas de los archivos externos de tu proyecto corporativo
 from airport import *  # Carga de aeropuertos, kml, cálculos geográficos y de espacio Schengen
@@ -36,8 +38,10 @@ class AirportApp:
         # --- Configuración del motor de estilos tipográficos y visuales (TTK) ---
         self.style = ttk.Style()
         self.style.configure("TButton", font=("Segoe UI", 10), padding=4)  # Diseño por defecto para botones generales
-        self.style.configure("Header.TLabel", font=("Segoe UI", 16, "bold"), background="#f4f6f7", foreground="#2c3e50")  # Estilo del título
-        self.style.configure("Toggle.TButton", font=("Segoe UI", 10, "bold"), foreground="#2c3e50")  # Estilo de botones cabecera de menú
+        self.style.configure("Header.TLabel", font=("Segoe UI", 16, "bold"), background="#f4f6f7",
+                             foreground="#2c3e50")  # Estilo del título
+        self.style.configure("Toggle.TButton", font=("Segoe UI", 10, "bold"),
+                             foreground="#2c3e50")  # Estilo de botones cabecera de menú
 
         # --- Layout Estructural y Paneles Principales (Distribución en Pantalla) ---
         # Etiqueta del título superior
@@ -46,26 +50,32 @@ class AirportApp:
 
         # Contenedor maestro que agrupa el panel izquierdo (botones) y el derecho (gráficos)
         self.main_container = tk.Frame(self.root, bg="#f4f6f7")
-        self.main_container.pack(fill="both", expand=True, padx=20, pady=5)  # Se expande por completo respetando márgenes horizontales
+        self.main_container.pack(fill="both", expand=True, padx=20,
+                                 pady=5)  # Se expande por completo respetando márgenes horizontales
 
         # Panel izquierdo reservado exclusivamente para los botones de control y menús desplegables
         self.button_frame = tk.Frame(self.main_container, bg="#f4f6f7")
-        self.button_frame.pack(side="left", fill="y", padx=10)  # Se alinea a la izquierda y ocupa todo el alto disponible
+        self.button_frame.pack(side="left", fill="y",
+                               padx=10)  # Se alinea a la izquierda y ocupa todo el alto disponible
 
         # Panel derecho (LabelFrame con borde decorativo) destinado a renderizar gráficos y tablas
         self.plot_frame = tk.LabelFrame(self.main_container, text="Panel de Visualización Integrado", bg="white",
                                         font=("Segoe UI", 11, "bold"), fg="#34495e")
-        self.plot_frame.pack(side="right", fill="both", expand=True, padx=10, pady=5)  # Ocupa todo el espacio sobrante de la derecha
+        self.plot_frame.pack(side="right", fill="both", expand=True, padx=10,
+                             pady=5)  # Ocupa todo el espacio sobrante de la derecha
 
         # Inicializa los mensajes en el visor central y construye la arquitectura de botones
         self.show_welcome_message()
         self.setup_collapsible_menus()
 
         # --- Barra de Estado Inferior ---
-        self.status_var = tk.StringVar(value="Listo | Estructura LEBL: No cargada")  # Variable de texto interactiva de Tkinter
+        self.status_var = tk.StringVar(
+            value="Listo | Estructura LEBL: No cargada")  # Variable de texto interactiva de Tkinter
         self.status_bar = tk.Label(self.root, textvariable=self.status_var, bd=1, relief="sunken", anchor="w",
-                                   font=("Consolas", 10), bg="#bdc3c7")  # Control visual estilo "hundido" (sunken) alineado a la izquierda (w)
-        self.status_bar.pack(side="bottom", fill="x")  # Se adhiere al fondo absoluto de la ventana expandiéndose horizontalmente
+                                   font=("Consolas", 10),
+                                   bg="#bdc3c7")  # Control visual estilo "hundido" (sunken) alineado a la izquierda (w)
+        self.status_bar.pack(side="bottom",
+                             fill="x")  # Se adhiere al fondo absoluto de la ventana expandiéndose horizontalmente
 
     def show_welcome_message(self):
         """Muestra una etiqueta informativa por defecto en el panel derecho cuando este se encuentra vacío."""
@@ -89,32 +99,38 @@ class AirportApp:
         self.status_var.set(
             f"Estado: OK | Aeropuertos: {len(self.lista_aeropuertos)} | Vuelos: {len(self.lista_vuelos)} | Estructura LEBL: {lebl_status}")
 
-
     # =====================================================================================
     # SECCIÓN 3: CONSTRUCCIÓN DEL MENÚ INTERACTIVO (CONTRACCIONES Y DESPLEGABLES)
     # =====================================================================================
     def setup_collapsible_menus(self):
         """Crea los botones principales y los subpaneles ocultos para simular un menú de pestañas colapsables."""
-        
+
         # ----------------- SUBMENÚ 1: GEOMETRÍA Y AEROPUERTOS -----------------
         # Botón maestro que expande o contrae la Sección 1
         self.btn_toggle_airports = ttk.Button(self.button_frame, text="▲ GEOMETRÍA Y AEROPUERTOS",
                                               style="Toggle.TButton", width=35, command=self.toggle_airports_panel)
         self.btn_toggle_airports.pack(fill="x", pady=(5, 0))
-        
+
         # Marco oculto (Frame) que almacena la botonera interna de aeropuertos con borde en relieve tipo 'groove'
         self.airports_content = tk.Frame(self.button_frame, bg="#f4f6f7", bd=1, relief="groove")
-        
+
         # Botones asignados a las funciones lógicas de 'airport.py'
-        ttk.Button(self.airports_content, text="Cargar Archivo Aeropuertos...", width=33, command=self.f_load).pack(pady=2, padx=5)
-        ttk.Button(self.airports_content, text="Calcular Atributo Schengen", width=33, command=self.f_schengen).pack(pady=2, padx=5)
-        ttk.Button(self.airports_content, text="Mostrar Datos (Terminal)", width=33, command=self.f_show).pack(pady=2, padx=5)
-        ttk.Button(self.airports_content, text="Guardar Schengen a Fichero...", width=33, command=self.f_save).pack(pady=2, padx=5)
-        ttk.Button(self.airports_content, text="Ver Aeropuertos en Google Earth", width=33, command=self.f_map).pack(pady=2, padx=5)
-        ttk.Button(self.airports_content, text="Gráfico: Schengen vs No Schengen", width=33, command=self.f_plot_airports_embedded).pack(pady=2, padx=5)
+        ttk.Button(self.airports_content, text="Cargar Archivo Aeropuertos...", width=33, command=self.f_load).pack(
+            pady=2, padx=5)
+        ttk.Button(self.airports_content, text="Calcular Atributo Schengen", width=33, command=self.f_schengen).pack(
+            pady=2, padx=5)
+        ttk.Button(self.airports_content, text="Mostrar Datos (Terminal)", width=33, command=self.f_show).pack(pady=2,
+                                                                                                               padx=5)
+        ttk.Button(self.airports_content, text="Guardar Schengen a Fichero...", width=33, command=self.f_save).pack(
+            pady=2, padx=5)
+        ttk.Button(self.airports_content, text="Ver Aeropuertos en Google Earth", width=33, command=self.f_map).pack(
+            pady=2, padx=5)
+        ttk.Button(self.airports_content, text="Gráfico: Schengen vs No Schengen", width=33,
+                   command=self.f_plot_airports_embedded).pack(pady=2, padx=5)
 
         # Zona de borrado dinámico (Subcuadro con campo de texto integrado para eliminar aeropuertos por código ICAO)
-        delete_zone = tk.LabelFrame(self.airports_content, text="Eliminar Aeropuerto por Código", bg="#f4f6f7", font=("Segoe UI", 9, "bold"))
+        delete_zone = tk.LabelFrame(self.airports_content, text="Eliminar Aeropuerto por Código", bg="#f4f6f7",
+                                    font=("Segoe UI", 9, "bold"))
         delete_zone.pack(fill="x", pady=5, padx=5)
         tk.Label(delete_zone, text="ICAO:", bg="#f4f6f7").pack(side="left", padx=2)
         self.delete_entry = ttk.Entry(delete_zone, width=8, font=("Segoe UI", 10, "bold"))  # Caja de entrada de texto
@@ -126,37 +142,52 @@ class AirportApp:
         self.btn_toggle_flights = ttk.Button(self.button_frame, text="▲ OPERACIONES Y TRÁFICO", style="Toggle.TButton",
                                              width=35, command=self.toggle_flights_panel)
         self.btn_toggle_flights.pack(fill="x", pady=(5, 0))
-        
+
         # Marco oculto (Frame) para la botonera interna de vuelos
         self.flights_content = tk.Frame(self.button_frame, bg="#f4f6f7", bd=1, relief="groove")
-        
+
         # Botones asignados a las funciones lógicas de 'Aircraft.py'
-        ttk.Button(self.flights_content, text="Cargar Archivo Operaciones...", width=33, command=self.f_load_arrivals).pack(pady=2, padx=5)
-        ttk.Button(self.flights_content, text="Gráfico: Frecuencia Horaria", width=33, command=self.f_plot_arrivals_embedded).pack(pady=2, padx=5)
-        ttk.Button(self.flights_content, text="Gráfico: Vuelos por Aerolínea", width=33, command=self.f_plot_airlines_embedded).pack(pady=2, padx=5)
-        ttk.Button(self.flights_content, text="Gráfico: Vuelos por Origen", width=33, command=self.f_plot_type_embedded).pack(pady=2, padx=5)
-        ttk.Button(self.flights_content, text="Guardar Vuelos a Fichero...", width=33, command=self.f_save_flights).pack(pady=2, padx=5)
-        ttk.Button(self.flights_content, text="Ver Trayectorias en Google Earth", width=33, command=self.f_map_flights).pack(pady=2, padx=5)
-        ttk.Button(self.flights_content, text="Filtrar Larga Distancia (>2000km)", width=33, command=self.f_long_flights).pack(pady=2, padx=5)
+        ttk.Button(self.flights_content, text="Cargar Archivo Operaciones...", width=33,
+                   command=self.f_load_arrivals).pack(pady=2, padx=5)
+        ttk.Button(self.flights_content, text="Gráfico: Frecuencia Horaria", width=33,
+                   command=self.f_plot_arrivals_embedded).pack(pady=2, padx=5)
+        ttk.Button(self.flights_content, text="Gráfico: Vuelos por Aerolínea", width=33,
+                   command=self.f_plot_airlines_embedded).pack(pady=2, padx=5)
+        ttk.Button(self.flights_content, text="Gráfico: Vuelos por Origen", width=33,
+                   command=self.f_plot_type_embedded).pack(pady=2, padx=5)
+        ttk.Button(self.flights_content, text="Guardar Vuelos a Fichero...", width=33,
+                   command=self.f_save_flights).pack(pady=2, padx=5)
+        ttk.Button(self.flights_content, text="Ver Trayectorias en Google Earth", width=33,
+                   command=self.f_map_flights).pack(pady=2, padx=5)
+        ttk.Button(self.flights_content, text="Filtrar Larga Distancia (>2000km)", width=33,
+                   command=self.f_long_flights).pack(pady=2, padx=5)
 
         # ----------------- SUBMENÚ 3: ADMINISTRADOR DE PUERTAS (LAS 5 FUNCIONES DE LEBL) -----------------
         # Botón maestro que expande o contrae la Sección 3
         self.btn_toggle_gates = ttk.Button(self.button_frame, text="▲ ADMINISTRADOR DE PUERTAS", style="Toggle.TButton",
-                                            width=35, command=self.toggle_gates_panel)
+                                           width=35, command=self.toggle_gates_panel)
         self.btn_toggle_gates.pack(fill="x", pady=(5, 0))
-        
+
         # Marco oculto (Frame) para las funciones del módulo LEBL
         self.gates_content = tk.Frame(self.button_frame, bg="#f4f6f7", bd=1, relief="groove")
 
         # Botones mapeados uno a uno con los controladores interactivos de las 5 funciones nativas de LEBL
-        ttk.Button(self.gates_content, text="Cargar Estructura", width=33, command=self.f_ui_load_airport_structure).pack(pady=2, padx=5)
-        ttk.Button(self.gates_content, text="Ver Ocupación de Puertas", width=33, command=self.f_ui_gate_occupancy).pack(pady=2, padx=5)
-        ttk.Button(self.gates_content, text="Cargar Aerolíneas", width=33, command=self.f_ui_load_airlines).pack(pady=2, padx=5)
-        ttk.Button(self.gates_content, text="Asignar Puertas", width=33, command=self.f_ui_set_gates).pack(pady=2, padx=5)
-        ttk.Button(self.gates_content, text="Verificar Aerolínea", width=33, command=self.f_ui_is_airline_in_terminal).pack(pady=2, padx=5)
+        ttk.Button(self.gates_content, text="Cargar Estructura", width=33,
+                   command=self.f_ui_load_airport_structure).pack(pady=2, padx=5)
+        ttk.Button(self.gates_content, text="Ver Ocupación de Puertas", width=33,
+                   command=self.f_ui_gate_occupancy).pack(pady=2, padx=5)
+        ttk.Button(self.gates_content, text="Cargar Aerolíneas", width=33, command=self.f_ui_load_airlines).pack(pady=2,
+                                                                                                                 padx=5)
+        ttk.Button(self.gates_content, text="Asignar Puertas", width=33, command=self.f_ui_set_gates).pack(pady=2,
+                                                                                                           padx=5)
+        ttk.Button(self.gates_content, text="Verificar Aerolínea", width=33,
+                   command=self.f_ui_is_airline_in_terminal).pack(pady=2, padx=5)
+        ttk.Button(self.gates_content, text="Buscar Terminal de Aerolínea", width=33,
+                   command=self.f_ui_search_terminal).pack(pady=2, padx=5)
 
         # Botón de desconexión / cierre seguro de la aplicación (posicionado abajo del todo)
-        ttk.Button(self.button_frame, text="SALIR DE LA APLICACIÓN", width=35, command=self.root.quit).pack(side="bottom", pady=15)
+        ttk.Button(self.button_frame, text="SALIR DE LA APLICACIÓN", width=35, command=self.root.quit).pack(
+            side="bottom", pady=15)
 
     # --- MÉTODOS DE ANIMACIÓN DE LOS MENÚS (PACK / PACK_FORGET) ---
     def toggle_airports_panel(self):
@@ -166,7 +197,8 @@ class AirportApp:
             self.btn_toggle_airports.configure(text="▲ GEOMETRÍA Y AEROPUERTOS")
             self.airports_visible = False
         else:
-            self.airports_content.pack(fill="x", padx=2, pady=(0, 10), after=self.btn_toggle_airports)  # Lo monta justo debajo del botón maestro
+            self.airports_content.pack(fill="x", padx=2, pady=(0, 10),
+                                       after=self.btn_toggle_airports)  # Lo monta justo debajo del botón maestro
             self.btn_toggle_airports.configure(text="▼ GEOMETRÍA Y AEROPUERTOS")
             self.airports_visible = True
 
@@ -192,11 +224,10 @@ class AirportApp:
             self.btn_toggle_gates.configure(text="▼ ADMINISTRADOR DE PUERTAS")
             self.gates_visible = True
 
-
     # =====================================================================================
     # SECCIÓN 4: CAPA DE INTERFAZ E INTERACCIÓN PARA LAS 5 FUNCIONES DE LEBL.py
     # =====================================================================================
-    
+
     def f_ui_load_airport_structure(self):
         """Llamada guiada a la FUNCIÓN 3 (load_airport_structure): Lee el fichero txt de jerarquía aeroportuaria."""
         # Abre una ventana flotante del sistema operativo para buscar y seleccionar ficheros .txt
@@ -205,7 +236,8 @@ class AirportApp:
             res = LEBL.load_airport_structure(path)  # Llama a la lógica de negocio externa pasando la ruta absoluta
             if res:
                 self.bcn_airport = res  # Almacena el objeto estructurado devuelto en la variable global del programa
-                messagebox.showinfo("Función 3", f"Estructura del aeropuerto {self.bcn_airport.code} procesada correctamente mediante LEBL.load_airport_structure().")
+                messagebox.showinfo("Función 3",
+                                    f"Estructura del aeropuerto {self.bcn_airport.code} procesada correctamente mediante LEBL.load_airport_structure().")
                 self.update_status()  # Refresca los contadores inferiores de la barra gris
                 self.clear_plot_frame()  # Borra el lienzo de dibujo
                 self.show_welcome_message()  # Restaura el mensaje inicial de aviso
@@ -218,7 +250,8 @@ class AirportApp:
             messagebox.showerror("Error", "Carga primero la estructura (Función 3).")
             return
         self.clear_plot_frame()  # Limpia el área derecha de la interfaz
-        datos_puertas = LEBL.gate_occupancy(self.bcn_airport)  # Ejecuta la función del módulo que extrae la matriz de ocupación
+        datos_puertas = LEBL.gate_occupancy(
+            self.bcn_airport)  # Ejecuta la función del módulo que extrae la matriz de ocupación
 
         # Construcción de un marco contenedor secundario con scrollbar vertical integrada
         table_frame = tk.Frame(self.plot_frame, bg="white")
@@ -230,7 +263,8 @@ class AirportApp:
         columnas = ("Puerta", "Estado", "Aeronave Asignada")
         tabla = ttk.Treeview(table_frame, columns=columnas, show="headings", yscrollcommand=scrollbar.set)
         tabla.pack(fill="both", expand=True)
-        scrollbar.config(command=tabla.yview)  # Conecta los movimientos del ratón en la barra con el desplazamiento de la tabla
+        scrollbar.config(
+            command=tabla.yview)  # Conecta los movimientos del ratón en la barra con el desplazamiento de la tabla
 
         # Nombres de las cabeceras de la tabla
         tabla.heading("Puerta", text="Puerta (Gate)")
@@ -255,7 +289,7 @@ class AirportApp:
         if not self.bcn_airport:
             messagebox.showerror("Error", "Primero carga la estructura con la Función 3.")
             return
-        
+
         # Crea una ventana secundaria flotante (Toplevel) que bloquea el fondo (grab_set)
         sub_window = tk.Toplevel(self.root)
         sub_window.title("F2: Cargar Aerolíneas")
@@ -275,14 +309,16 @@ class AirportApp:
             for t in self.bcn_airport.terminals:
                 if t.name == t_select:
                     target_terminal = t
-            
+
             if target_terminal:
                 res = LEBL.load_airlines(target_terminal, t_select)  # Llama a tu función de LEBL.py
                 if res:
-                    messagebox.showinfo("Función 2", f"Se han cargado {len(target_terminal.airline_icao_codes)} códigos ICAO en la {t_select}.")
+                    messagebox.showinfo("Función 2",
+                                        f"Se han cargado {len(target_terminal.airline_icao_codes)} códigos ICAO en la {t_select}.")
                     sub_window.destroy()  # Cierra la ventana emergente automáticamente tras el éxito
                 else:
-                    messagebox.showerror("Error", f"Fichero de aerolíneas '{t_select}_Airlines.txt' ausente en el directorio.")
+                    messagebox.showerror("Error",
+                                         f"Fichero de aerolíneas '{t_select}_Airlines.txt' ausente en el directorio.")
             else:
                 messagebox.showerror("Error", "La terminal no existe en el objeto cargado.")
 
@@ -299,15 +335,16 @@ class AirportApp:
         work_panel = tk.Frame(self.plot_frame, bg="white")
         work_panel.pack(fill="both", expand=True, padx=20, pady=20)
 
-        tk.Label(work_panel, text="F1: Modificar Rango de Puertas Dinámicamente (set_gates)", font=("Segoe UI", 11, "bold"), bg="white").grid(row=0, column=0, columnspan=2, pady=10)
+        tk.Label(work_panel, text="F1: Modificar Rango de Puertas Dinámicamente (set_gates)",
+                 font=("Segoe UI", 11, "bold"), bg="white").grid(row=0, column=0, columnspan=2, pady=10)
         tk.Label(work_panel, text="Selecciona Área de embarque:", bg="white").grid(row=1, column=0, sticky="w", pady=5)
-        
+
         # Mapea todas las áreas disponibles en el aeropuerto para mostrarlas en el Combobox
         areas_disponibles = []
         for term in self.bcn_airport.terminals:
             for ar in term.boarding_areas:
                 areas_disponibles.append(f"{term.name} - Area {ar.name}")
-        
+
         if not areas_disponibles:
             tk.Label(work_panel, text="No hay áreas cargadas.", fg="red", bg="white").grid(row=2, column=0)
             return
@@ -349,17 +386,19 @@ class AirportApp:
                     if cont == idx_sel:
                         target_area = ar
                     cont += 1
-            
+
             if target_area:
                 resultado = LEBL.set_gates(target_area, ini, fin, pref)  # Llama a la primera función de LEBL.py
                 if resultado == -1:
                     messagebox.showerror("Error", "El rango final debe ser estrictamente mayor que el inicial.")
                 else:
-                    messagebox.showinfo("Función 1", f"¡Éxito! El área seleccionada ahora cuenta con {len(target_area.gates)} nuevas puertas generadas.")
+                    messagebox.showinfo("Función 1",
+                                        f"¡Éxito! El área seleccionada ahora cuenta con {len(target_area.gates)} nuevas puertas generadas.")
             else:
                 messagebox.showerror("Error", "Área no localizada.")
 
-        ttk.Button(work_panel, text="Aplicar set_gates()", command=aplicar_set_gates).grid(row=5, column=0, columnspan=2, pady=15)
+        ttk.Button(work_panel, text="Aplicar set_gates()", command=aplicar_set_gates).grid(row=5, column=0,
+                                                                                           columnspan=2, pady=15)
 
     def f_ui_is_airline_in_terminal(self):
         """Llamada guiada a la FUNCIÓN 5 (is_airline_in_terminal): Valida la operatividad de una aerolínea mediante su código ICAO."""
@@ -371,14 +410,17 @@ class AirportApp:
         work_panel = tk.Frame(self.plot_frame, bg="white")
         work_panel.pack(fill="both", expand=True, padx=20, pady=20)
 
-        tk.Label(work_panel, text="F5: Validación de Operatividad de Aerolínea", font=("Segoe UI", 11, "bold"), bg="white").grid(row=0, column=0, columnspan=2, pady=10)
-        tk.Label(work_panel, text="Código ICAO Compañía (3-4 letras):", bg="white").grid(row=1, column=0, sticky="w", pady=5)
-        
+        tk.Label(work_panel, text="F5: Validación de Operatividad de Aerolínea", font=("Segoe UI", 11, "bold"),
+                 bg="white").grid(row=0, column=0, columnspan=2, pady=10)
+        tk.Label(work_panel, text="Código ICAO Compañía (3-4 letras):", bg="white").grid(row=1, column=0, sticky="w",
+                                                                                         pady=5)
+
         entry_icao = ttk.Entry(work_panel, width=12, font=("Segoe UI", 10, "bold"))
         entry_icao.grid(row=1, column=1, sticky="w", pady=5)
 
         tk.Label(work_panel, text="Consultar en Terminal:", bg="white").grid(row=2, column=0, sticky="w", pady=5)
-        combo_term = ttk.Combobox(work_panel, values=[t.name for t in self.bcn_airport.terminals], state="readonly", width=10)
+        combo_term = ttk.Combobox(work_panel, values=[t.name for t in self.bcn_airport.terminals], state="readonly",
+                                  width=10)
         combo_term.grid(row=2, column=1, sticky="w", pady=5)
         if self.bcn_airport.terminals: combo_term.current(0)
 
@@ -398,22 +440,62 @@ class AirportApp:
             if target_terminal:
                 pertenece = LEBL.is_airline_in_terminal(target_terminal, icao)  # Llama a la quinta función de LEBL.py
                 if pertenece:
-                    messagebox.showinfo("Resultado F5", f"SÍ. La aerolínea {icao} está autorizada y opera en la {t_name}.")
+                    messagebox.showinfo("Resultado F5",
+                                        f"SÍ. La aerolínea {icao} está autorizada y opera en la {t_name}.")
                 else:
-                    messagebox.showwarning("Resultado F5", f"NO. La aerolínea {icao} NO tiene asignada la {t_name} o no se encuentra registrada.")
+                    messagebox.showwarning("Resultado F5",
+                                           f"NO. La aerolínea {icao} NO tiene asignada la {t_name} o no se encuentra registrada.")
             else:
                 messagebox.showerror("Error", "Terminal no válida.")
 
-        ttk.Button(work_panel, text="Comprobar via is_airline_in_terminal()", command=comprobar).grid(row=3, column=0, columnspan=2, pady=15)
+        ttk.Button(work_panel, text="Comprobar via is_airline_in_terminal()", command=comprobar).grid(row=3, column=0,
+                                                                                                      columnspan=2,
+                                                                                                      pady=15)
 
+        def f_ui_search_terminal(self):
+            #truquem la funcio
+            if not self.bcn_airport:
+                messagebox.showerror("Error", "Carga primero la estructura con la Función 3.")
+                return
+
+            self.clear_plot_frame()
+            work_panel = tk.Frame(self.plot_frame, bg="white")
+            work_panel.pack(fill="both", expand=True, padx=20, pady=20)
+
+            tk.Label(work_panel, text="Búsqueda de Terminal por Aerolínea", font=("Segoe UI", 11, "bold"),
+                     bg="white").grid(row=0, column=0, columnspan=2, pady=10)
+            tk.Label(work_panel, text="Código ICAO de la Aerolínea (ej. VLG):", bg="white").grid(row=1, column=0,
+                                                                                                 sticky="w", pady=5)
+
+            entry_airline = ttk.Entry(work_panel, width=15, font=("Segoe UI", 10, "bold"))
+            entry_airline.grid(row=1, column=1, sticky="w", pady=5)
+            entry_airline.focus()
+
+            def buscar():
+                airline_name = entry_airline.get().strip().upper()
+                if not airline_name:
+                    messagebox.showwarning("Campo Vacío", "Por favor, introduce el nombre o código de una aerolínea.")
+                    return
+
+                terminal_asignada = LEBL.SearchTerminal(self.bcn_airport, airline_name)
+
+                if terminal_asignada != "":
+                    messagebox.showinfo("Búsqueda Exitosa",
+                                        f"La aerolínea {airline_name} debe embarcar a sus pasajeros en la terminal: {terminal_asignada}")
+                else:
+                    messagebox.showwarning("No Encontrada",
+                                           f"La aerolínea {airline_name} no opera en ninguna terminal registrada de este aeropuerto.")
+
+            ttk.Button(work_panel, text="Buscar Terminal", command=buscar).grid(row=2, column=0, columnspan=2, pady=15)
 
     # =====================================================================================
     # SECCIÓN 5: CONTROLADORES DE LOGÍSTICA ORIGINALES (Carga, KMLs y Gráficos)
     # =====================================================================================
-    
+
     def f_load(self):
         """Carga y procesa el fichero con la base de datos de aeropuertos mundiales."""
-        path = filedialog.askopenfilename(title="Abrir base de datos de aeropuertos", filetypes=[("Text files", "*.txt")])
+        path = filedialog.askopenfilename(title="Abrir base de datos de aeropuertos",
+                                          filetypes=[("Text files", "*.txt")])
         if path:
             self.lista_aeropuertos = load_airports(path)  # Función de airport.py
             messagebox.showinfo("Éxito", f"Cargados {len(self.lista_aeropuertos)} aeropuertos.")
@@ -423,7 +505,8 @@ class AirportApp:
 
     def f_load_arrivals(self):
         """Carga y procesa el log de operaciones / vuelos de llegada hacia el aeropuerto."""
-        path = filedialog.askopenfilename(title="Abrir registro de llegadas (Arrivals)", filetypes=[("Text files", "*.txt")])
+        path = filedialog.askopenfilename(title="Abrir registro de llegadas (Arrivals)",
+                                          filetypes=[("Text files", "*.txt")])
         if path:
             self.lista_vuelos = load_arrivals(path)  # Función de Aircraft.py
             messagebox.showinfo("Éxito", f"Cargados {len(self.lista_vuelos)} vuelos.")
@@ -434,7 +517,7 @@ class AirportApp:
     def f_delete_dynamic(self):
         """Elimina un aeropuerto de la lista en memoria mediante coincidencia de código ICAO."""
         codigo_a_borrar = self.delete_entry.get().strip().upper()
-        if not codigo_a_borrar: 
+        if not codigo_a_borrar:
             messagebox.showwarning("Campo vacío", "Introduce un código ICAO.")
             return
         res = remove_airport(self.lista_aeropuertos, codigo_a_borrar)  # Función de airport.py
@@ -449,42 +532,44 @@ class AirportApp:
 
     def f_schengen(self):
         """Calcula el booleano Schengen para cada aeropuerto según su prefijo geográfico ICAO."""
-        if not self.lista_aeropuertos: 
+        if not self.lista_aeropuertos:
             messagebox.showwarning("Atención", "No hay aeropuertos cargados.")
             return
-        for a in self.lista_aeropuertos: 
+        for a in self.lista_aeropuertos:
             set_schengen(a)  # Función de airport.py
         messagebox.showinfo("Éxito", "Atributos Schengen mapeados en memoria.")
 
     def f_save(self):
         """Guarda en un archivo de texto externo únicamente los aeropuertos pertenecientes a la zona Schengen."""
-        path = filedialog.asksaveasfilename(defaultextension=".txt", initialfile="solo_schengen.txt", filetypes=[("Text files", "*.txt")])
+        path = filedialog.asksaveasfilename(defaultextension=".txt", initialfile="solo_schengen.txt",
+                                            filetypes=[("Text files", "*.txt")])
         if path:
-            if save_schengen_airports(self.lista_aeropuertos, path) == 1: 
+            if save_schengen_airports(self.lista_aeropuertos, path) == 1:
                 messagebox.showinfo("Éxito", "Fichero Schengen guardado.")
-            else: 
+            else:
                 messagebox.showwarning("Error", "No hay datos para guardar.")
 
     def f_save_flights(self):
         """Exporta el estado actualizado de la lista de vuelos a un fichero txt persistente."""
-        path = filedialog.asksaveasfilename(defaultextension=".txt", initialfile="saved_arrivals.txt", filetypes=[("Text files", "*.txt")])
+        path = filedialog.asksaveasfilename(defaultextension=".txt", initialfile="saved_arrivals.txt",
+                                            filetypes=[("Text files", "*.txt")])
         if path:
-            if save_flights(self.lista_vuelos, path): 
+            if save_flights(self.lista_vuelos, path):
                 messagebox.showinfo("Éxito", "Registro de vuelos guardado.")
-            else: 
+            else:
                 messagebox.showerror("Error", "La lista de vuelos está vacía.")
 
     # --- MÉTODOS DE RENDERIZADO DE GRÁFICOS MATPLOTLIB EN LA INTERFAZ ---
-    
+
     def f_plot_airports_embedded(self):
         """Dibuja un gráfico de barras apiladas comparando aeropuertos Schengen vs No Schengen."""
-        if not self.lista_aeropuertos: 
+        if not self.lista_aeropuertos:
             messagebox.showerror("Error", "No hay aeropuertos cargados.")
             return
         self.clear_plot_frame()
         schengen = sum(1 for a in self.lista_aeropuertos if a.schengen)
         not_schengen = len(self.lista_aeropuertos) - schengen
-        
+
         fig, ax = plt.subplots(figsize=(5, 5))  # Instancia figura y ejes de Matplotlib
         ax.bar(["Aeropuertos"], [schengen], label="Schengen", color="#2980b9", width=0.4)
         ax.bar(["Aeropuertos"], [not_schengen], bottom=[schengen], label="Not Schengen", color="#e74c3c", width=0.4)
@@ -492,7 +577,7 @@ class AirportApp:
         ax.set_title("Estadística de Espacio Schengen")
         ax.legend()
         ax.grid(axis='y', linestyle='--', alpha=0.5)
-        
+
         # Inserta el gráfico en el panel derecho usando el conector de Tkinter de Matplotlib
         canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
         canvas.draw()
@@ -501,7 +586,7 @@ class AirportApp:
 
     def f_plot_arrivals_embedded(self):
         """Dibuja un histograma de frecuencias horarias basado en las horas de llegada de los vuelos."""
-        if not self.lista_vuelos: 
+        if not self.lista_vuelos:
             messagebox.showerror("Error", "No hay registros de vuelos cargados.")
             return
         self.clear_plot_frame()
@@ -509,7 +594,7 @@ class AirportApp:
         cont_hora = [0] * 24
         for hora in horas_formato:
             if 0 <= hora < 24: cont_hora[hora] += 1
-            
+
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.bar(list(range(24)), cont_hora, color='#8e44ad', edgecolor='black')
         ax.set_title("Frecuencia de Vuelos por Hora de Llegada")
@@ -517,7 +602,7 @@ class AirportApp:
         ax.set_ylabel("Aviones")
         ax.set_xticks(list(range(24)))
         ax.grid(axis='y', linestyle='--', alpha=0.4)
-        
+
         canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
@@ -525,7 +610,7 @@ class AirportApp:
 
     def f_plot_airlines_embedded(self):
         """Genera un diagrama de barras verticales con el volumen de vuelos operados por cada aerolínea."""
-        if not self.lista_vuelos: 
+        if not self.lista_vuelos:
             messagebox.showerror("Error", "No hay vuelos cargados.")
             return
         self.clear_plot_frame()
@@ -536,13 +621,14 @@ class AirportApp:
             else:
                 nombres_agencias.append(avion.company)
                 conteos.append(1)
-                
+
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.bar(nombres_agencias, conteos, color='orange', edgecolor='black')
-        ax.set_xticklabels(nombres_agencias, rotation=35, ha="right", fontsize=8)  # Rota etiquetas para evitar solapamientos
+        ax.set_xticklabels(nombres_agencias, rotation=35, ha="right",
+                           fontsize=8)  # Rota etiquetas para evitar solapamientos
         ax.grid(axis='y', linestyle='--', alpha=0.3)
         fig.tight_layout()
-        
+
         canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
@@ -550,34 +636,39 @@ class AirportApp:
 
     def f_plot_type_embedded(self):
         """Clasifica y compara gráficamente los vuelos según su procedencia (Schengen vs Internacionales)."""
-        if not self.lista_vuelos: 
+        if not self.lista_vuelos:
             messagebox.showerror("Error", "No hay datos de operaciones.")
             return
         self.clear_plot_frame()
-        prefixes = ['LO', 'EB', 'LK', 'LC', 'EK', 'EE', 'EF', 'LF', 'ED', 'LG', 'EH', 'LH', 'BI', 'LI', 'EV', 'EY', 'EL', 'LM', 'EN', 'EP', 'LP', 'LZ', 'LJ', 'LE', 'ES', 'LS']
+        prefixes = ['LO', 'EB', 'LK', 'LC', 'EK', 'EE', 'EF', 'LF', 'ED', 'LG', 'EH', 'LH', 'BI', 'LI', 'EV', 'EY',
+                    'EL', 'LM', 'EN', 'EP', 'LP', 'LZ', 'LJ', 'LE', 'ES', 'LS']
         ts, tns = 0, 0
         for avion in self.lista_vuelos:
-            if avion.origin[:2] in prefixes: ts += 1
-            else: tns += 1
-            
+            if avion.origin[:2] in prefixes:
+                ts += 1
+            else:
+                tns += 1
+
         fig, ax = plt.subplots(figsize=(5, 4))
-        bars = ax.bar(['Schengen', 'Non-Schengen'], [ts, tns], color=['#2ecc71', '#e74c3c'], edgecolor='black', width=0.5)
+        bars = ax.bar(['Schengen', 'Non-Schengen'], [ts, tns], color=['#2ecc71', '#e74c3c'], edgecolor='black',
+                      width=0.5)
         ax.grid(axis='y', linestyle='--', alpha=0.3)
         # Bucle para escribir el valor numérico exacto encima de cada barra del gráfico
-        for bar in bars: 
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.2, str(bar.get_height()), ha='center', va='bottom', fontweight='bold')
-            
+        for bar in bars:
+            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.2, str(bar.get_height()), ha='center',
+                    va='bottom', fontweight='bold')
+
         canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
         plt.close(fig)
 
     # --- MÉTODOS AUXILIARES: SALIDA POR CONSOLA Y EXPORTACIÓN KML ---
-    
+
     def f_show(self):
         """Vuelca por la consola estándar de Python los detalles tabulados de los aeropuertos cargados."""
         print("\n--- Estado en Consola ---")
-        for a in self.lista_aeropuertos: 
+        for a in self.lista_aeropuertos:
             print_airport(a)  # Función de airport.py que ejecuta los prints del objeto
         messagebox.showinfo("Terminal", "Mapeo volcado en la consola del sistema.")
 
@@ -603,7 +694,8 @@ class AirportApp:
             largos = long_distance_arrivals(self.lista_vuelos, self.lista_aeropuertos)  # Función de airport.py
             if largos:
                 map_flights(largos, self.lista_aeropuertos)
-                messagebox.showinfo("Filtro Geo", f"Detectados {len(largos)} vuelos de larga distancia (>2000 km) hacia LEBL.")
+                messagebox.showinfo("Filtro Geo",
+                                    f"Detectados {len(largos)} vuelos de larga distancia (>2000 km) hacia LEBL.")
             else:
                 messagebox.showinfo("Info", "Ninguna operación en el registro supera el umbral de los 2000 km.")
         else:
