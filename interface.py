@@ -184,7 +184,8 @@ class AirportApp:
                    command=self.f_ui_is_airline_in_terminal).pack(pady=2, padx=5)
         ttk.Button(self.gates_content, text="Buscar Terminal de Aerolínea", width=33,
                    command=self.f_ui_search_terminal).pack(pady=2, padx=5)
-
+        ttk.Button(self.gates_content, text="Asignar Puerta Automática", width=33,
+                   command=self.f_ui_assign_gate).pack(pady=2, padx=5)
         # Botón de desconexión / cierre seguro de la aplicación (posicionado abajo del todo)
         ttk.Button(self.button_frame, text="SALIR DE LA APLICACIÓN", width=35, command=self.root.quit).pack(
             side="bottom", pady=15)
@@ -488,6 +489,52 @@ class AirportApp:
 
             ttk.Button(work_panel, text="Buscar Terminal", command=buscar).grid(row=2, column=0, columnspan=2, pady=15)
 
+    def f_ui_assign_gate(self):
+        """Capa visual para interactuar con la función LEBL.AssignGate."""
+        if not self.bcn_airport:
+            messagebox.showerror("Error", "Carga primero la estructura con la Función 3.")
+            return
+        if not self.lista_vuelos:
+            messagebox.showerror("Error", "No hay vuelos cargados en el sistema (Carga Operaciones en el Submenú 2).")
+            return
+
+        self.clear_plot_frame()
+        work_panel = tk.Frame(self.plot_frame, bg="white")
+        work_panel.pack(fill="both", expand=True, padx=20, pady=20)
+
+        tk.Label(work_panel, text="Asignación Automática de Puerta (AssignGate)", font=("Segoe UI", 11, "bold"),
+                 bg="white").grid(row=0, column=0, columnspan=2, pady=10)
+        tk.Label(work_panel, text="Selecciona un vuelo de la lista para asignarle puerta:", bg="white").grid(row=1,
+                                                                                                             column=0,
+                                                                                                             columnspan=2,
+                                                                                                             sticky="w",
+                                                                                                             pady=5)
+
+        # Creamos un desplegable para elegir un vuelo cargado
+        vuelos_disponibles = [f"{v.id} ({v.airline_icao}) - {'Schengen' if v.schengen else 'No-Schengen'}" for v in
+                              self.lista_vuelos]
+        combo_vuelos = ttk.Combobox(work_panel, values=vuelos_disponibles, state="readonly", width=40)
+        combo_vuelos.grid(row=2, column=0, columnspan=2, pady=10)
+        combo_vuelos.current(0)
+
+        def ejecutar_asignacion():
+            idx = combo_vuelos.current()
+            aeronave_seleccionada = self.lista_vuelos[idx]
+
+            # Llamamos a la función AssignGate que está dentro de tu módulo LEBL
+            resultado = LEBL.AssignGate(self.bcn_airport, aeronave_seleccionada)
+
+            if resultado == True:
+                messagebox.showinfo("Éxito", f"El vuelo {aeronave_seleccionada.id} ha sido asignado correctamente.")
+            elif resultado == -1:
+                messagebox.showerror("Error -1",
+                                     "No quedan puertas libres disponibles para este tipo de vuelo en su terminal.")
+            else:
+                messagebox.showwarning("Error de Registro",
+                                       "La aerolínea de este vuelo no está registrada en ninguna terminal.")
+
+        ttk.Button(work_panel, text="Asignar Puerta", command=ejecutar_asignacion).grid(row=3, column=0, columnspan=2,
+                                                                                        pady=15)
     # =====================================================================================
     # SECCIÓN 5: CONTROLADORES DE LOGÍSTICA ORIGINALES (Carga, KMLs y Gráficos)
     # =====================================================================================
