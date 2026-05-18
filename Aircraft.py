@@ -1,213 +1,306 @@
+import math
 import os
 import matplotlib.pyplot as plt
 
-class Airport:
-# se representan los aeropuertos mediante: - código ICAO
-#                                          - coordenadas geográficas (lat, lon)
-    def __init__(self, code, lat, lon):
-        self.code = code
-        self.lat = lat                                                                                  #formato decimal
-        self.lon = lon                                                                                  #formato decimal
-        self.schengen = False
+class Aircraft:
+# se representan los vuelos mediante: - código de avión
+#                                     - compañía aerea
+#                                     - aeropuerto de origen
+#                                     - hora de llegada
+    def __init__(self, codigo, company, origin, time):
+        self.codigo = codigo
+        self.company = company
+        self.origin = origin
+        self.time = time
 
-#============================================== AEROPUERTO SCHENGEN O NO ===============================================
-def is_schengen_airport(code):
-#FUNCIÓN: comprueba si un aeropuerto pertenece al espacio Schengen utilizando las 2 primeras letras de los códigos ICAO
-# TRUE --> aeropuerto schengen
-# FALSE --> aeropuerto NO schengen
-#si el código está vacío, la función devuelve FALSE
-
-    if not code:
-        return False
-    prefix = code[:2]
-    schengen_prefixes = [
-        'LO', 'EB', 'LK', 'LC', 'EK', 'EE', 'EF', 'LF', 'ED', 'LG', 'EH', 'LH','BI',
-        'LI', 'EV', 'EY', 'EL', 'LM', 'EN', 'EP', 'LP', 'LZ', 'LJ', 'LE','ES', 'LS'
-    ]
-    return prefix in schengen_prefixes
-
-#=======================================================================================================================
-def set_schengen(airport):
-#FUNCIÓN: actualiza la caracterísitca schengen de un aeropuerto utilizando la función anterior
-    airport.schengen = is_schengen_airport(airport.code)
-
-#================================================= MOSTRAR INFORMACIÓN =================================================
-def print_airport(airport):
-#FUNCIÓN: muestra la información principal de un aeropuerto, visualizando: - ICAO
-#                                                                          - coordenadas geográficas
-#                                                                          - estado schengen
-
-    if airport.schengen:
-        status = "Yes"
-    else:
-        status = "No"
-    print("---Airport Data---")
-    print("ICAO Code: ",airport.code)
-    print("Coordinates: ", airport.lat, airport.lon)
-    print("Schengen: ",status)
-
-#============================================ CARGAR AEROPUERTOS DESDE FICHERO =========================================
-def load_airports(filename):
-#FUNCIÓN: carga los aeropuertos almacenados en un fichero (.txt) y genera una lista de objetos Airport
-#         el fichero (.txt) debe seguir el formato: CODE LATITUDE LONGITUDE
+#============================================= CARGA DE VUELOS DESDE FICHERO ===========================================
+def load_arrivals(filename):
+#FUNCIÓN: carga los vuelos almacenados en en un fichero (.txt) y genera una lista de objetos Aircraft
+#         el fichero (.txt) debe seguir el formato: AIRCRAFT ORIGIN ARRIVAL AIRLINE
 #         convierte las coordenadas desde el formato sexagesimal a decimal
-#         si el fichero no existe, devuelve una lista vacía
+#         si el fichero no existe o una línea no tiene el formato correcto, la línea se IGNORA
 
-    if not os.path.exists(filename):
-        return []
-
-    lista_aeropuertos=[]
-    f = open(filename,'r')
+    f = open(filename, 'r')
+    lista_arrivals = []
     f.readline()
     linea = f.readline()
+
     while linea != "":
         elementos = linea.split()
-        if len(elementos) == 3:
+
+        if len(elementos) == 4:
             codigo = elementos[0]
-            lat_str = elementos[1]
-            lon_str = elementos[2]
+            origen = elementos[1]
+            tiempo = elementos[2]
+            company = elementos[3]
+            nueva_llegada = Aircraft(codigo, company, origen, tiempo)
+            lista_arrivals.append(nueva_llegada)
+            linea = f.readline()
 
-            # -------- LATITUD --------
-            grados = float(lat_str[1:3])
-            minutos = float(lat_str[3:5])
-            segundos = float(lat_str[5:7])
-            # conversión a grados decimales
-            lat_decimal = grados + (minutos / 60) + (segundos / 3600)
-            if lat_str[0] == "S" or lat_str[0] == "W":
-                lat_decimal = -lat_decimal
-
-            # -------- LONGITUDE --------
-            grados_lon = float(lon_str[1:4])
-            minutos_lon = float(lon_str[4:6])
-            segundos_lon = float(lon_str[6:8])
-            # conversión a grados decimales
-            lon_decimal = grados_lon + (minutos_lon / 60) + (segundos_lon / 3600)
-            if lon_str[0] == 'S' or lon_str[0] == 'W':
-                lon_decimal = -lon_decimal
-            nuevo_aeropuerto = Airport(codigo, lat_decimal, lon_decimal)
-            lista_aeropuertos.append(nuevo_aeropuerto)
-        linea = f.readline()
     f.close()
-    return lista_aeropuertos
+    return lista_arrivals
 
-#============================================== GUARDAR AEROPUERTOS SCHENGEN ===========================================
-def save_schengen_airports(airports, filename):
-#FUNCIÓN: guardar en un fichero ÚNICAMENTE los aeropuertos que pertenecen al espacio schengen
-#         importante tener en cuenta que primero comprueba si existe al menos 1 aeropuerto schengen antes de generar
-#         el fichero, si no existe ni 1 ya no genera el fichero
-# 1 --> guardado/realizado correcto
-# 0 --> no existe aeropuerto schengen
+#============================================ DISTRIBUCIÓN HORARIA DE LLEGADAS =========================================
+def plot_arrivals(lista_de_vuelos):
+#FUNCIÓN: genera un gráfico de barras con la frecuencia de llegada durante las distintas horas
+#         (solamente se tiene en cuenta la hora de llegada para hacer la distribución horaria)
+#         si la lista está vacía, muestra "error"
+    if not lista_de_vuelos:
+        print("Error", "No hay datos cargados.")
+        return False
 
-    hay_schengen = False
-    i = 0
-    while i < len(airports):
-        if airports[i].schengen == True:
-            hay_schengen = True
-        i += 1
-    if not hay_schengen:
-        return 0
+    try:
+        horas_formato = []
+        for obj in lista_de_vuelos:
+            hora_str = obj.time.split(':')[0]
+            horas_formato.append(int(hora_str))
 
-    f = open(filename,'w')
-    f.write("CODE LAT LON\n")
+        cont_hora = [0] * 24
+        for hora in horas_formato:
+            if 0 <= hora < 24:
+                cont_hora[hora] += 1
 
-    i=0
-    while i < len(airports):
-        a = airports[i]
-        if a.schengen == True:
-            f.write(a.code + " " + str(a.lat) + " " + str(a.lon) + "\n")
-        i += 1
-    f.close()
-    return 1
+        eje_x = list(range(24))
+        eje_y = cont_hora
 
-#================================================ AÑADIR AEROPUERTOS A LISTA ===========================================
-def add_airport(airports,airport):
-#FUNCIÓN: añadir un aeropuerto a la lista pero comprobando que no haya duplicados códigos ICAO
+        plt.figure(figsize=(10, 5))
+        plt.bar(eje_x, eje_y, color='blue', edgecolor='black')
+        plt.title("Vuelos por Hora de Llegada")
+        plt.xlabel("Hora del día")
+        plt.ylabel("Cantidad de aviones")
+        plt.xticks(eje_x)  # Para que salgan todos los números del 0 al 23
+        plt.grid(axis='y', linestyle='--', alpha=0.4)
 
-    encontrado = False
-    i = 0
-    while i < len(airports):
-        if airports[i].code == airport.code:
-            encontrado = True
-        i += 1
-    if not encontrado:
-        airports.append(airport)
+        plt.show()
+        return True
 
-#============================================== ELIMINAR AEROPUERTOS DE LISTA ==========================================
-def remove_airport(airports,code):
-#FUNCIÓN: eliminar un aeropuerto de la lista utilizando el código ICAO
-# 1 --> aeropuerto eliminado correctamente
-# 0 --> no realizado
+    except AttributeError:
+        print("Error", "Los objetos cargados no tienen el atributo '.time'")
 
-    i = 0
-    while i < len(airports):
-        if airports[i].code == code:
-            airports.pop(i)
-            return 1
-        i += 1
-    return 0
-
-#===================================== GRÁFICO DE BARRAS AEROPUERTOS (SCHENGEN/NO SCHENGEN) ============================
-def plot_airports(airports):
-#FUNCIÓN: generar un gráfico de barras apiladas con la distribución de aeropuertos schengen/no schengen
-
-    schengen = 0
-    not_schengen = 0
-    i = 0
-    while i < len(airports):
-        if airports[i].schengen:
-            schengen += 1
+#============================================== GUARDAR VUELOS EN FICHERO ==============================================
+def save_flights(aircrafts, filename):
+#FUNCIÓN: guarda la información de los vuelos en un fichero .txt utilizando el mismo formato que el original
+#         las partes vacías se representan símbolo "-"
+#         si la lista está vacía no genera ningún fichero
+    if not aircrafts:
+        return False
+    f = open(filename, 'w')
+    f.write("AIRCRAFT ORIGIN ARRIVALS AIRLINE\n")
+    for aircraft in aircrafts:
+        if aircraft.codigo:
+            aid = aircraft.codigo
         else:
-            not_schengen += 1
-        i += 1
-    labels = ["Airports"]
-    plt.bar(labels,[schengen],label="Schengen",color="blue")
-    plt.bar(labels,[not_schengen],bottom=[schengen],label="Not schengen",color="red")
-    plt.ylabel("Number of airports.txt")
-    plt.title("Schengen vs Not schengen")
-    plt.legend()
+            aid = "-"
+        if aircraft.origin:
+            origin = aircraft.origin
+        else:
+            origin = "-"
+        if aircraft.time:
+            time = aircraft.time
+        else:
+            time = "-"
+        if aircraft.company:
+            company = aircraft.company
+        else:
+            company = "-"
+
+        f.write(f"{aid} {origin} {time} {company}\n")
+    f.close()
+    return True
+
+#=========================================== ESTADÍSTICAS DE COMPAÑÍAS AEREAS ==========================================
+def plot_airlines(lista_vols):
+#FUNCIÓN: genera un gráfico de barras con el número de vuelos por compañía aerea
+#         si la lista está vacía manda mensaje de error
+    if len(lista_vols) == 0:
+        print("Error: El vector está vacío.")
+        return False
+
+    nombres_agencias = []
+    conteos = []
+
+    for avion in lista_vols:
+        agencia_actual = avion.company
+
+        encontrado = False
+        i = 0
+        while i < len(nombres_agencias):
+            if nombres_agencias[i] == agencia_actual:
+                conteos[i] += 1
+                encontrado = True
+            i += 1
+
+        if not encontrado:
+            nombres_agencias.append(agencia_actual)
+            conteos.append(1)
+
+    plt.figure(figsize=(18, 5))
+    plt.bar(nombres_agencias, conteos, color='orange', edgecolor='black')
+
+    plt.title("Airlines Statistics")
+    plt.xlabel("Agencies")
+    plt.ylabel("Number of Aircraft")
+    plt.xticks(rotation=45)
+    plt.xticks(fontsize=6)
+    plt.grid(axis='y', linestyle='--', alpha=0.3)
+
+    plt.show()
+    return True
+
+#============================================= VUELOS SCHENGEN / NO SCHENGEN ===========================================
+def plot_flights_type(aircrafts):
+#FUNCIÓN: genera un gráfico de barras con la cantidad de vuelos procedentes de países schengen y no schengen
+#         la clasificación se hace con el prefijo del código ICAO
+    if len(aircrafts) == 0:
+        print("Error: The aircraft list is empty.")
+        return False
+
+    schengen_prefixes = [
+        'LO', 'EB', 'LK', 'LC', 'EK', 'EE', 'EF', 'LF', 'ED', 'LG', 'EH', 'LH', 'BI',
+        'LI', 'EV', 'EY', 'EL', 'LM', 'EN', 'EP', 'LP', 'LZ', 'LJ', 'LE', 'ES', 'LS'
+    ]
+
+    total_schengen = 0
+    total_no_schengen = 0
+
+    for avion in aircrafts:
+        prefijo = avion.origin[:2]
+        if prefijo in schengen_prefixes:
+            total_schengen += 1
+        else:
+            total_no_schengen += 1
+
+    ejes_x = ['Schengen', 'Non-Schengen']
+    ejes_y = [total_schengen, total_no_schengen]
+
+    plt.figure(figsize=(8, 6))
+    colores = ['green', 'red']
+    plt.bar(ejes_x, ejes_y, color=colores, edgecolor='black')
+    plt.title("Total Flights by Origin Type")
+    plt.xlabel("Type of Origin")
+    plt.ylabel("Number of Aircraft")
+
+    for i in range(len(ejes_y)):
+        plt.text(i, ejes_y[i] + 0.1, str(ejes_y[i]), ha='center', va='bottom', fontsize=12)
+
+    plt.grid(axis='y', linestyle='--', alpha=0.3)
     plt.show()
 
-#======================================= GENERA FICHERO .KML + CARGAR EN GOOGLE EARTH ==================================
-def map_airports(airports):
-# FUNCIÓN:generar un fichero .kml para cargar los aeropuertos en Google Earth diferenciando los aeropuertos
-#         schengen/ no schengen por colores
+    return True
 
-    f = open("airports_map.kml", "w")
+#============================================== TRAYECTORIAS EN GOOGLE EARTH ===========================================
+def map_flights(aircrafts, airports):
+#FUNCIÓN: genera un fichero .kml para visualizar en Google Earth las trayectorias de llegada de los vuelos hacia LEBL
+#         se representan las trayectorias mediante líneas, diferenciando colores dependiendo si schengen o no schengen
+#         el ficheroo se abre automáticamente en Google Earth
+    f = open('flights_map.kml', 'w')
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     f.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n')
     f.write('<Document>\n')
 
+    #coordenadas base LEBL (BARCELONA)
+    lat_lebl = 41.297445
+    lon_lebl = 2.0832941
+
     i = 0
-    while i < len(airports):
-        a = airports[i]
-        #diferenciación por colores
-        if a.schengen:
-            color = "ffff0000"
+    while i < len(aircrafts):
+        avion = aircrafts[i]
+
+        j = 0                                                                       #búsqueda del aeropuerto de origen
+        encontrado = False                                                          #a cada vuelo
+        while j < len(airports):
+            if airports[j].code == avion.origin:
+                origen = airports[j]
+                encontrado = True
+            j += 1
+        if not encontrado:
+            i += 1
+            continue
+
+        prefix = avion.origin[:2]  # esto es lo mismo que al principip
+        schengen_prefixes = [
+            'LO', 'EB', 'LK', 'LC', 'EK', 'EE', 'EF', 'LF', 'ED', 'LG', 'EH', 'LH', 'BI',
+            'LI', 'EV', 'EY', 'EL', 'LM', 'EN', 'EP', 'LP', 'LZ', 'LJ', 'LE', 'ES', 'LS'
+        ]
+        if prefix in schengen_prefixes:
+            color = "ffff0000"  # azul
         else:
-            color = "ff0000ff"  #rojo
+            color = "ff00ff00"  # verde
 
         f.write('<Placemark>\n')
+        f.write('<Style><LineStyle><color>' + color + '</color><width>3</width></LineStyle></Style>\n')             #hace que las lineas sean bien visibles
+        f.write('<LineString>\n')
+        f.write('<tessellate>1</tessellate>\n')                                                                     #mejora la curvatura de las líneas
+        f.write('<coordinates>\n')
 
-        # configuración del marcador
-        f.write('<Style>\n')
-        f.write('<IconStyle>\n')
-        f.write('<color>' + color + '</color>\n')
-        f.write('</IconStyle>\n')
-        f.write('</Style>\n')
-        f.write('<name>' + a.code + '</name>\n')
-        f.write('<Point>\n')
-        f.write('<coordinates>' + str(a.lon) + "," + str(a.lat) + '</coordinates>\n')
-        f.write('</Point>\n')
+        f.write(str(origen.lon) + "," + str(origen.lat) + "\n")
+        f.write(str(lon_lebl) + "," + str(lat_lebl) + "\n")
+
+        f.write('</coordinates>\n')
+        f.write('</LineString>\n')
         f.write('</Placemark>\n')
 
         i += 1
+
 
     f.write('</Document>\n')
     f.write('</kml>\n')
 
     f.close()
 
-    print("Archivo 'airports_map.kml' creado. Ábrelo con Google Earth.")
+    print("Archivo flights_map.kml creado")
+
 
     #abrir el Google Earth de manera directa
-    os.startfile("airports_map.kml")
+    os.startfile("flights_map.kml")
+
+#================================================== HAVERSINE DISTANCE =================================================
+def Haversine(lat1, lon1, lat2, lon2):
+#FUNCIÓN: calcula la distancia (km) entre 2 coordenadas geográficas utilizando la fórmula de Haversine
+    R = 6371                                                                                           #radio tierra
+    lat1 = math.radians(lat1)                                                                          #ángulos RADIANES
+    lon1 = math.radians(lon1)
+    lat2 = math.radians(lat2)
+    lon2 = math.radians(lon2)
+    # distancia angular entre puntos
+    dif_lat = lat2 - lat1
+    dif_lon = lon2 - lon1
+    # fórmula
+    a = math.sin(dif_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dif_lon / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return R * c
+
+#=========================================== VUELOS DE LARGA DISTANCIA (2000KM) ========================================
+def long_distance_arrivals(aircrafts, airports):
+#FUNCIÓN: devuelve una lista con los vuelos que llegan a LEBL desde un aeropuerto +2000km (inspección especial tras landing)
+    lista_long_flights = []
+    i = 0
+    #coordenadas base LEBL (BARCELONA)
+    lat_lebl = 41.297445
+    lon_lebl = 2.0832941
+
+    while i < len(aircrafts):
+        avion = aircrafts[i]
+
+        j = 0
+        encontrado = False
+        while j < len(airports):
+            if airports[j].code == avion.origin:
+                origen = airports[j]                                                                                #si --> true, guarda el aeropuerto (+ coordenadas)
+                encontrado = True
+            j += 1
+
+        if not encontrado:
+            i += 1
+            continue
+
+        distancia = Haversine(origen.lat, origen.lon, lat_lebl, lon_lebl)
+        # aquí ya se entiende que si no hay aeropuerto = origen no guarda la lon o lat
+
+        if distancia > 2000:
+            lista_long_flights.append(avion)
+
+        i += 1
+
+    return lista_long_flights
