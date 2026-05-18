@@ -12,9 +12,10 @@ class Airport:
 
 #============================================== AEROPUERTO SCHENGEN O NO ===============================================
 def is_schengen_airport(code):
-#FUNCIÓN: comprueba si un aeropuerto pertenece al espacio Schengen a partir del prefijo ICAO (2 primeras letras)
+#FUNCIÓN: comprueba si un aeropuerto pertenece al espacio Schengen utilizando las 2 primeras letras de los códigos ICAO
 # TRUE --> aeropuerto schengen
 # FALSE --> aeropuerto NO schengen
+#si el código está vacío, la función devuelve FALSE
 
     if not code:
         return False
@@ -27,12 +28,12 @@ def is_schengen_airport(code):
 
 #=======================================================================================================================
 def set_schengen(airport):
-#FUNCIÓN: actualiza la caracterísitca schengen de un aeropuerto utilizando el código ICAO
+#FUNCIÓN: actualiza la caracterísitca schengen de un aeropuerto utilizando la función anterior
     airport.schengen = is_schengen_airport(airport.code)
 
 #================================================= MOSTRAR INFORMACIÓN =================================================
 def print_airport(airport):
-#FUNCIÓN: mostrar la información principal de un aeropuerto, visualizando: - ICAO
+#FUNCIÓN: muestra la información principal de un aeropuerto, visualizando: - ICAO
 #                                                                          - coordenadas geográficas
 #                                                                          - estado schengen
 
@@ -45,11 +46,12 @@ def print_airport(airport):
     print("Coordinates: ", airport.lat, airport.lon)
     print("Schengen: ",status)
 
-#=============================================== MODIFICAR .TXT A LISTAS ===============================================
+#============================================ CARGAR AEROPUERTOS DESDE FICHERO =========================================
 def load_airports(filename):
-#FUNCIÓN: carga los aeropuertos almacenados en un fichero (.txt) y genera una lista de "objetos"
-#         el fichero (.txt) debe estar: CODE LATITUDE LONGITUDE
+#FUNCIÓN: carga los aeropuertos almacenados en un fichero (.txt) y genera una lista de objetos Airport
+#         el fichero (.txt) debe seguir el formato: CODE LATITUDE LONGITUDE
 #         convierte las coordenadas desde el formato sexagesimal a decimal
+#         si el fichero no existe, devuelve una lista vacía
 
     if not os.path.exists(filename):
         return []
