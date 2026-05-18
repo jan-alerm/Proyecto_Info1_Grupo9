@@ -66,8 +66,15 @@ def load_airlines(terminal, t_name):
     line = f.readline()                                                        #nueva lista vacía para añadir aerolineas
 
     while line != "":
-        codigo = line[-3:]                            #solo interesa el ICAO code de la aerolínea (últimos 3 carácteres)
-        nueva_lista.append(codigo)
+        # 1. Primero eliminamos el salto de línea invisible (\n) si existe
+        line_limpia = line.replace("\n", "").replace("\r", "")
+
+        # 2. Ahora sí, extraemos estrictamente los 3 últimos caracteres de esa línea limpia
+        codigo = line_limpia[-3:]
+
+        if codigo:
+            nueva_lista.append(codigo)
+
         line = f.readline()
 
     f.close()
