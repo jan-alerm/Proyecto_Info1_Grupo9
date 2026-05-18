@@ -490,7 +490,7 @@ class AirportApp:
         ttk.Button(work_panel, text="Buscar Terminal", command=buscar).grid(row=2, column=0, columnspan=2, pady=15)
 
     def f_ui_assign_gate(self):
-        """Capa visual para interactuar con la función LEBL.AssignGate."""
+        """Esto sirve interactuar con la función LEBL.AssignGate."""
         if not self.bcn_airport:
             messagebox.showerror("Error", "Carga primero la estructura con la Función 3.")
             return
