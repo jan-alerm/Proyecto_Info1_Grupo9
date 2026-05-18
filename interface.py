@@ -3,7 +3,7 @@ from tkinter import messagebox, filedialog, ttk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# Importaciones externas de tus módulos de lógica de negocio
+
 from airport import *
 from Aircraft import *
 import LEBL
