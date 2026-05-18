@@ -184,3 +184,27 @@ def is_airline_in_terminal(terminal, name):
             return True
         i = i + 1
     return False
+
+
+def SearchTerminal(bcn, name):
+    """
+    Given bcn of class BarcelonaAP and the name of one airline, this function
+    returns the name of the terminal where the airline must board its passengers.
+    Use function is_airline_in_terminal. If the airline is not found in any of the
+    terminals, the return name shall be a null string.
+    """
+    # Iniciamos la i en 0 para recorrer las terminales del aeropuerto
+    i = 0
+
+    # Recorremos la lista de terminales de bcn usando un while
+    while i < len(bcn.terminals):
+        terminal_actual = bcn.terminals[i]
+
+        # Comprobamos si la aerolínea opera en la terminal actual
+        if is_airline_in_terminal(terminal_actual, name):
+            return terminal_actual.name  # Si la encuentra, devuelve el nombre de la terminal ("T1", "T2")
+
+        i = i + 1
+
+    # Si termina el bucle y no se ha encontrado en ninguna terminal, devolvemos un string vacío
+    return ""
