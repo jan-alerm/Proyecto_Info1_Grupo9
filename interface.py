@@ -453,41 +453,41 @@ class AirportApp:
                                                                                                       columnspan=2,
                                                                                                       pady=15)
 
-        def f_ui_search_terminal(self):
-            #truquem la funcio
-            if not self.bcn_airport:
-                messagebox.showerror("Error", "Carga primero la estructura con la Función 3.")
+    def f_ui_search_terminal(self):
+        #truquem la funcio
+        if not self.bcn_airport:
+            messagebox.showerror("Error", "Carga primero la estructura con la Función 3.")
+            return
+
+        self.clear_plot_frame()
+        work_panel = tk.Frame(self.plot_frame, bg="white")
+        work_panel.pack(fill="both", expand=True, padx=20, pady=20)
+
+        tk.Label(work_panel, text="Búsqueda de Terminal por Aerolínea", font=("Segoe UI", 11, "bold"),
+                 bg="white").grid(row=0, column=0, columnspan=2, pady=10)
+        tk.Label(work_panel, text="Código ICAO de la Aerolínea (ej. VLG):", bg="white").grid(row=1, column=0,
+                                                                                             sticky="w", pady=5)
+
+        entry_airline = ttk.Entry(work_panel, width=15, font=("Segoe UI", 10, "bold"))
+        entry_airline.grid(row=1, column=1, sticky="w", pady=5)
+        entry_airline.focus()
+
+        def buscar():
+            airline_name = entry_airline.get().strip().upper()
+            if not airline_name:
+                messagebox.showwarning("Campo Vacío", "Por favor, introduce el nombre o código de una aerolínea.")
                 return
 
-            self.clear_plot_frame()
-            work_panel = tk.Frame(self.plot_frame, bg="white")
-            work_panel.pack(fill="both", expand=True, padx=20, pady=20)
+            terminal_asignada = LEBL.SearchTerminal(self.bcn_airport, airline_name)
 
-            tk.Label(work_panel, text="Búsqueda de Terminal por Aerolínea", font=("Segoe UI", 11, "bold"),
-                     bg="white").grid(row=0, column=0, columnspan=2, pady=10)
-            tk.Label(work_panel, text="Código ICAO de la Aerolínea (ej. VLG):", bg="white").grid(row=1, column=0,
-                                                                                                 sticky="w", pady=5)
+            if terminal_asignada != "":
+                messagebox.showinfo("Búsqueda Exitosa",
+                                    f"La aerolínea {airline_name} debe embarcar a sus pasajeros en la terminal: {terminal_asignada}")
+            else:
+                messagebox.showwarning("No Encontrada",
+                                       f"La aerolínea {airline_name} no opera en ninguna terminal registrada de este aeropuerto.")
 
-            entry_airline = ttk.Entry(work_panel, width=15, font=("Segoe UI", 10, "bold"))
-            entry_airline.grid(row=1, column=1, sticky="w", pady=5)
-            entry_airline.focus()
-
-            def buscar():
-                airline_name = entry_airline.get().strip().upper()
-                if not airline_name:
-                    messagebox.showwarning("Campo Vacío", "Por favor, introduce el nombre o código de una aerolínea.")
-                    return
-
-                terminal_asignada = LEBL.SearchTerminal(self.bcn_airport, airline_name)
-
-                if terminal_asignada != "":
-                    messagebox.showinfo("Búsqueda Exitosa",
-                                        f"La aerolínea {airline_name} debe embarcar a sus pasajeros en la terminal: {terminal_asignada}")
-                else:
-                    messagebox.showwarning("No Encontrada",
-                                           f"La aerolínea {airline_name} no opera en ninguna terminal registrada de este aeropuerto.")
-
-            ttk.Button(work_panel, text="Buscar Terminal", command=buscar).grid(row=2, column=0, columnspan=2, pady=15)
+        ttk.Button(work_panel, text="Buscar Terminal", command=buscar).grid(row=2, column=0, columnspan=2, pady=15)
 
     def f_ui_assign_gate(self):
         """Capa visual para interactuar con la función LEBL.AssignGate."""
