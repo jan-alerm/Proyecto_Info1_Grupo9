@@ -208,3 +208,59 @@ def SearchTerminal(bcn, name):
 
     # Si termina el bucle y no se ha encontrado en ninguna terminal, devolvemos un string vacío
     return ""
+
+
+def AssignGate(bcn, aircraft):
+    # 1. Trobem la terminal correcta per a l'aerolínia de l'aeronau
+    airline_name = aircraft.airline_icao
+    terminal_target_name = SearchTerminal(bcn, airline_name)
+
+    # Si l'aerolínia no opera a cap terminal, retornem un codi d'error
+    if terminal_target_name == "":
+        print("Error: Aerolínea no registrada en ninguna terminal.")
+        return False
+
+    # 2. Determinem el tipus d'àrea de l'aeronau ('schengen' o 'non-schengen')
+    # Adaptació automàtica per si aircraft.schengen és Booleà (True/False) o String
+    if isinstance(aircraft.schengen, bool):
+        flight_type = "schengen" if aircraft.schengen else "non-schengen"
+    else:
+        flight_type = aircraft.schengen.lower()  # per si ja ve com a text "schengen" o "non-schengen"
+
+    # 3. Recórrem l'estructura de terminals buscant la terminal correcta
+    i = 0
+    while i < len(bcn.terminals):
+        terminal_actual = bcn.terminals[i]
+
+        # Si coincideix el nom de la terminal ("T1" o "T2")
+        if terminal_actual.name == terminal_target_name:
+
+            # Recórrer les boarding areas d'aquesta terminal
+            j = 0
+            while j < len(terminal_actual.boarding_areas):
+                area_actual = terminal_actual.boarding_areas[j]
+
+                # Comprovar si el tipus d'àrea coincideix amb el tipus de vol
+                if area_actual.type == flight_type:
+
+                    # Recórrer les portes (gates) de l'àrea trobada
+                    g = 0
+                    while g < len(area_actual.gates):
+                        gate_actual = area_actual.gates[g]
+
+                        # Si trobem la primera porta lliure (not occupied)
+                        if not gate_actual.occupied:
+                            # Assignem la porta actualitzant els seus camps
+                            gate_actual.occupied = True
+                            gate_actual.aircraft_id = aircraft.id  # O el camp identificador de la teva nau (ex: aircraft.id o aircraft.flight_number)
+
+                            print(f"Éxito: Aeronave asignada a la puerta {gate_actual.name}")
+                            return True  # Retornem True indicant l'èxit de l'operació
+
+                        g = g + 1
+                j = j + 1
+        i = i + 1
+
+    # 4. Si arribem aquí, significa que s'ha trobat la terminal i l'àrea, però no queden portes lliures
+    print("Error: No hay puertas libres disponibles para este tipo de vuelo en su terminal.")
+    return -1  # Retorna un codi d'error tal com demana l'enunciat
