@@ -22,7 +22,7 @@ class AirportApp:
         """Constructor de la aplicación: Inicializa la ventana y todos sus componentes."""
         self.root = root  # Guarda la ventana raíz de la aplicación
         self.root.title("Proyecto de Informática I - Grupo 9")  # Asigna el título en la barra superior de la ventana
-        self.root.geometry("1350x950")  # Define el tamaño inicial de la pantalla en píxeles (Ancho x Alto)
+        self.root.attributes("-fullscreen", True)  # Define el tamaño inicial de la pantalla en píxeles (Ancho x Alto)
         self.root.configure(bg="#f4f6f7")  # Establece un color de fondo gris claro para una apariencia moderna
 
         # --- Variables de control de Datos ---
