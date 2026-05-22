@@ -187,12 +187,7 @@ def is_airline_in_terminal(terminal, name):
 
 
 def SearchTerminal(bcn, name):
-    """
-    Given bcn of class BarcelonaAP and the name of one airline, this function
-    returns the name of the terminal where the airline must board its passengers.
-    Use function is_airline_in_terminal. If the airline is not found in any of the
-    terminals, the return name shall be a null string.
-    """
+
     # Iniciamos la i en 0 para recorrer las terminales del aeropuerto
     i = 0
 
@@ -220,12 +215,9 @@ def AssignGate(bcn, aircraft):
         print("Error: Aerolínea no registrada en ninguna terminal.")
         return False
 
-    # 2. Determinem el tipus d'àrea de l'aeronau ('schengen' o 'non-schengen')
-    # Adaptació automàtica per si aircraft.schengen és Booleà (True/False) o String
-    if isinstance(aircraft.schengen, bool):
-        flight_type = "schengen" if aircraft.schengen else "non-schengen"
-    else:
-        flight_type = aircraft.schengen.lower()  # per si ja ve com a text "schengen" o "non-schengen"
+    # 2. Determinem el tipus de shenguen que es l'aeronau ('schengen' o 'no-schengen')
+    flight_type = "schengen" if aircraft.schengen else "non-schengen"
+
 
     # 3. Recórrem l'estructura de terminals buscant la terminal correcta
     i = 0
@@ -250,12 +242,12 @@ def AssignGate(bcn, aircraft):
 
                         # Si trobem la primera porta lliure (not occupied)
                         if not gate_actual.occupied:
-                            # Assignem la porta actualitzant els seus camps
+                            # Assignem la porta actualitzant les altres
                             gate_actual.occupied = True
-                            gate_actual.aircraft_id = aircraft.id  # O el camp identificador de la teva nau (ex: aircraft.id o aircraft.flight_number)
+                            gate_actual.aircraft_id = aircraft.id
 
                             print(f"Éxito: Aeronave asignada a la puerta {gate_actual.name}")
-                            return True  # Retornem True indicant l'èxit de l'operació
+                            return True  #es retorna true per que aixi transmitim que esta be
 
                         g = g + 1
                 j = j + 1
@@ -263,4 +255,4 @@ def AssignGate(bcn, aircraft):
 
     # 4. Si arribem aquí, significa que s'ha trobat la terminal i l'àrea, però no queden portes lliures
     print("Error: No hay puertas libres disponibles para este tipo de vuelo en su terminal.")
-    return -1  # Retorna un codi d'error tal com demana l'enunciat
+    return False  # Retorna un codi d'error tal com demana l'enunciat
