@@ -3,6 +3,20 @@ PROYECTO INFORMÁTICA GRUPO 9
 
 integrantes: Pol Molinas Casals, Jan Alerm Foz, Paula Segade Gómez
 ---------------------------------------------------------------------------------------------------------------------------------
+
+VERSIÓN 3:
+Cambios que hemos hecho para esta versión:
+- rediseño completo de la interfaz gráfica, una interfaz más moderna e interactiva, mucho más atractiva al usuario (menús desplegables, secciones diferenciadas, integración de gráficos directamente dentro de la interfaz...)
+-  carga de archivos .txt
+- eliminación de aeropuertos introduciendo el código ICAO desde la interfaz
+- gestión de terminales y puertas
+- construir automáticamente la estructura del aeropuerto.
+- visualizar el estado de ocupación de las puertas.
+- asignar automáticamente puertas según terminal, tipo de vuelo y disponibilidad.
+enlace del video: https://youtu.be/BKlbS4Jw8q0?si=Y-enIlvIRJUpMfON
+
+---------------------------------------------------------------------------------------------------------------------------------
+
 VERSIÓN 2:
 
 enlace del video: https://youtu.be/gD7xKUEf3dc?si=CJCJHBE4vAOMcZxA
