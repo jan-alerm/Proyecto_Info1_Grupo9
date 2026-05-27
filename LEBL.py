@@ -46,41 +46,37 @@ def set_gates(area, init_gate, end_gate, prefix):
 
 #=========================================== CARGAR AEROLÍNEAS POR TERMINAL ============================================
 def load_airlines(terminal, t_name):
-#FUNCIÓN: carga las aerolíneas que tocan a una terminal desde los ficheros T1_airlines.txt o T2_airlines.txt
-#         si el fichero no existe, se devuelve false
-
+    # FUNCIÓN: carga las aerolíneas que tocan a una terminal
     if t_name == "T1" or t_name == "T2":
         terminal_name = t_name + "_Airlines.txt"
     else:
         print("No hay terminal con ese nombre")
         return False
 
-    #Si no se encuentra el fichero de esa terminal:
     try:
         f = open(terminal_name, "r")
     except FileNotFoundError:
         print("The file is not found")
         return False
 
-    nueva_lista = []                                                           #lee la primera línea
-    line = f.readline()                                                        #nueva lista vacía para añadir aerolineas
+    nueva_lista = []
+    line = f.readline()
 
     while line != "":
-        # 1. Primero eliminamos el salto de línea invisible (\n) si existe
-        line_limpia = line.replace("\n", "").replace("\r", "")
+        # .strip() elimina espacios en blanco, tabulaciones y saltos de línea (\n, \r) de los extremos
+        line_limpia = line.strip()
 
-        # 2. Ahora sí, extraemos estrictamente los 3 últimos caracteres de esa línea limpia
-        codigo = line_limpia[-3:]
-
-        if codigo:
+        # Solo procesamos si la línea no se ha quedado vacía
+        if line_limpia:
+            # Extraemos los últimos 3 caracteres asegurando que estén en mayúsculas
+            codigo = line_limpia[-3:].upper()
             nueva_lista.append(codigo)
 
         line = f.readline()
 
     f.close()
-    terminal.airline_icao_codes = nueva_lista                               #actualizamos la nueva lista en la terminal
+    terminal.airline_icao_codes = nueva_lista
     return True
-
 #=========================================== CARGAR "ESTRUCTURA DEL AEROPUERTO" ========================================
 def load_airport_structure(filename):
 #FUNCIÓN: crea un "objeto" BarcelonaAP utilizando la información guardada en el fichero LEBL.txt
