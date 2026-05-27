@@ -22,7 +22,7 @@ class AirportApp:
         """Constructor de la aplicación: Inicializa la ventana y todos sus componentes."""
         self.root = root  # Guarda la ventana raíz de la aplicación
         self.root.title("Proyecto de Informática I - Grupo 9")  # Asigna el título en la barra superior de la ventana
-        self.root.geometry("1350x950")  # Define el tamaño inicial de la pantalla en píxeles (Ancho x Alto)
+        self.root.attributes("-fullscreen", True)  # Define el tamaño inicial de la pantalla en píxeles (Ancho x Alto)
         self.root.configure(bg="#f4f6f7")  # Establece un color de fondo gris claro para una apariencia moderna
 
         # --- Variables de control de Datos ---
@@ -286,44 +286,67 @@ class AirportApp:
             tabla.insert("", "end", values=(g[0], g[1], g[2]), tags=(tag,))
 
     def f_ui_load_airlines(self):
-        """Llamada guiada a la FUNCIÓN 2 (load_airlines): Carga el listado de aerolíneas autorizadas abriendo un cuadro de diálogo."""
+        """Llamada corregida a LEBL.load_airlines sin alterar su comportamiento original."""
         if not self.bcn_airport:
             messagebox.showerror("Error", "Primero carga la estructura con la Función 3.")
             return
 
-        # Crea una ventana secundaria flotante (Toplevel) que bloquea el fondo (grab_set)
-        sub_window = tk.Toplevel(self.root)
-        sub_window.title("F2: Cargar Aerolíneas")
-        sub_window.geometry("350x150")
-        sub_window.grab_set()
+        # 1. Abrimos el explorador para buscar el archivo real en la computadora
+        path = filedialog.askopenfilename(
+            title="Seleccionar archivo de aerolíneas (T1_Airlines o T2_Airlines)",
+            filetypes=[("Text files", "*.txt")]
+        )
 
-        tk.Label(sub_window, text="Seleccione Terminal destino:", font=("Segoe UI", 10)).pack(pady=10)
-        combo = ttk.Combobox(sub_window, values=["T1", "T2"], state="readonly")  # Menú desplegable para elegir T1 o T2
-        combo.pack(pady=5)
-        combo.current(0)  # Selecciona T1 por defecto
+        if not path:
+            return  # Si el usuario cancela, salimos de forma segura
 
-        def ejecutar():
-            """Función interna que procesa la selección de la terminal tras pulsar el botón de confirmación."""
-            t_select = combo.get()
-            target_terminal = None
-            # Busca el objeto terminal coincidente dentro del objeto de aeropuerto actual
-            for t in self.bcn_airport.terminals:
-                if t.name == t_select:
-                    target_terminal = t
+        # 2. Identificamos qué terminal es basándonos en el nombre del archivo seleccionado
+        t_select = None
+        if "T1" in path or "t1" in path:
+            t_select = "T1"
+        elif "T2" in path or "t2" in path:
+            t_select = "T2"
+        else:
+            messagebox.showwarning("Archivo no reconocido",
+                                   "El archivo seleccionado debe contener 'T1' o 'T2' en su nombre para identificar la terminal.")
+            return
 
-            if target_terminal:
-                res = LEBL.load_airlines(target_terminal, t_select)  # Llama a tu función de LEBL.py
-                if res:
-                    messagebox.showinfo("Función 2",
-                                        f"Se han cargado {len(target_terminal.airline_icao_codes)} códigos ICAO en la {t_select}.")
-                    sub_window.destroy()  # Cierra la ventana emergente automáticamente tras el éxito
-                else:
-                    messagebox.showerror("Error",
-                                         f"Fichero de aerolíneas '{t_select}_Airlines.txt' ausente en el directorio.")
+        # 3. Buscamos el objeto Terminal dentro de nuestro aeropuerto
+        target_terminal = None
+        for t in self.bcn_airport.terminals:
+            if t.name == t_select:
+                target_terminal = t
+
+        if not target_terminal:
+            messagebox.showerror("Error", f"La terminal {t_select} no existe en la estructura de aeropuerto cargada.")
+            return
+
+        # 4. Copiamos temporalmente el archivo seleccionado a la carpeta del proyecto
+        #    con el nombre exacto que LEBL.py espera ("T1_Airlines.txt" o "T2_Airlines.txt").
+        #    De esta forma, no importa de qué carpeta del PC lo abras, funcionará.
+        try:
+            nombre_esperado = f"{t_select}_Airlines.txt"
+
+            # Leemos el archivo elegido por el usuario y reescribimos el local
+            with open(path, "r", encoding="utf-8", errors="ignore") as f_origen:
+                contenido = f_origen.read()
+            with open(nombre_esperado, "w", encoding="utf-8") as f_destino:
+                f_destino.write(contenido)
+
+            # 5. Ejecutamos tu función tal y como está diseñada en LEBL.py (esperando "T1" o "T2")
+            res = LEBL.load_airlines(target_terminal, t_select)
+
+            if res:
+                messagebox.showinfo("Función 2",
+                                    f"¡Éxito! Se han cargado {len(target_terminal.airline_icao_codes)} códigos ICAO en la {t_select}.\n"
+                                    f"Leído desde: {path}")
             else:
-                messagebox.showerror("Error", "La terminal no existe en el objeto cargado.")
+                messagebox.showerror("Error", f"Tu función LEBL.load_airlines devolvió False para la {t_select}.")
 
-        ttk.Button(sub_window, text="Ejecutar load_airlines()", command=ejecutar).pack(pady=10)
+        except Exception as error:
+            # Si algo falla en el proceso, este bloque atrapa el error y evita que la app se cierre sola
+            messagebox.showerror("Error de Ejecución",
+                                 f"Se evitó un cierre inesperado.\nDetalle del error:\n{str(error)}")
 
     def f_ui_set_gates(self):
         """Llamada guiada a la FUNCIÓN 1 (set_gates): Inicializa un rango numérico de puertas con prefijo en un área determinada."""
@@ -490,50 +513,77 @@ class AirportApp:
         ttk.Button(work_panel, text="Buscar Terminal", command=buscar).grid(row=2, column=0, columnspan=2, pady=15)
 
     def f_ui_assign_gate(self):
+        """Pide al usuario que introduzca o seleccione un vuelo y le asigna la puerta de forma individual."""
+        from tkinter import simpledialog
+
+        # 1. Validaciones previas de carga de datos
         if not self.bcn_airport:
-            messagebox.showerror("Error", "Carga primero la estructura con la Función 3.")
+            messagebox.showerror("Error", "Primero debes cargar la estructura del aeropuerto (Cargar Estructura).")
             return
+
         if not self.lista_vuelos:
-            messagebox.showerror("Error", "No hay vuelos cargados en el sistema (Carga Operaciones en el Submenú 2).")
+            messagebox.showerror("Error", "No hay vuelos cargados. Por favor, carga el archivo de operaciones primero.")
             return
 
-        self.clear_plot_frame()
-        work_panel = tk.Frame(self.plot_frame, bg="white")
-        work_panel.pack(fill="both", expand=True, padx=20, pady=20)
+        # 2. Crear una lista de códigos de vuelos disponibles para mostrársela al usuario
+        codigos_disponibles = []
+        i = 0
+        while i < len(self.lista_vuelos):
+            codigos_disponibles.append(self.lista_vuelos[i].codigo)
+            i += 1
 
-        tk.Label(work_panel, text="Asignación Automática de Puerta (AssignGate)", font=("Segoe UI", 11, "bold"),
-                 bg="white").grid(row=0, column=0, columnspan=2, pady=10)
-        tk.Label(work_panel, text="Selecciona un vuelo de la lista para asignarle puerta:", bg="white").grid(row=1,
-                                                                                                             column=0,
-                                                                                                             columnspan=2,
-                                                                                                             sticky="w",
-                                                                                                             pady=5)
+        # Limitamos la muestra en el mensaje si hay demasiados vuelos
+        muestra_codigos = ", ".join(codigos_disponibles[:10]) + ("..." if len(codigos_disponibles) > 10 else "")
 
-        # Creamos un desplegable para elegir un vuelo cargado
-        vuelos_disponibles = [f"{v.id} ({v.airline_icao}) - {'Schengen' if v.schengen else 'No-Schengen'}" for v in
-                              self.lista_vuelos]
-        combo_vuelos = ttk.Combobox(work_panel, values=vuelos_disponibles, state="readonly", width=40)
-        combo_vuelos.grid(row=2, column=0, columnspan=2, pady=10)
-        combo_vuelos.current(0)
+        # 3. Lanzar una ventana emergente para introducir el código del avión a gestionar
+        codigo_introducido = simpledialog.askstring(
+            "Seleccionar Vuelo",
+            f"Introduce el código del avión al que deseas asignar puerta:\n\nEjemplos cargados: {muestra_codigos}"
+        )
 
-        def ejecutar_asignacion():
-            idx = combo_vuelos.current()
-            aeronave_seleccionada = self.lista_vuelos[idx]
+        # Si el usuario cancela la ventana
+        if not codigo_introducido:
+            return
 
-            # Llamamos a la función AssignGate que está dentro de LEBL
-            resultado = LEBL.AssignGate(self.bcn_airport, aeronave_seleccionada)
+        # Limpiamos espacios en blanco y pasamos a mayúsculas
+        codigo_introducido = codigo_introducido.strip().upper()
 
-            if resultado == True:
-                messagebox.showinfo("Éxito", f"El vuelo {aeronave_seleccionada.id} ha sido asignado correctamente.")
-            elif resultado == -1:
-                messagebox.showerror("Error -1",
-                                     "No quedan puertas libres disponibles para este tipo de vuelo en su terminal.")
-            else:
-                messagebox.showwarning("Error de Registro",
-                                       "La aerolínea de este vuelo no está registrada en ninguna terminal.")
+        # 4. Buscar el objeto Aircraft correspondiente al código introducido
+        vuelo_seleccionado = None
+        j = 0
+        while j < len(self.lista_vuelos):
+            if self.lista_vuelos[j].codigo.upper() == codigo_introducido:
+                vuelo_seleccionado = self.lista_vuelos[j]
+                break
+            j += 1
 
-        ttk.Button(work_panel, text="Asignar Puerta", command=ejecutar_asignacion).grid(row=3, column=0, columnspan=2,
-                                                                                        pady=15)
+        if not vuelo_seleccionado:
+            messagebox.showerror("Vuelo no encontrado",
+                                 f"El código de vuelo '{codigo_introducido}' no existe en las operaciones actuales.")
+            return
+
+        # 5. Procesar la asignación unitaria llamando a LEBL
+        resultado = LEBL.AssignGate(self.bcn_airport, vuelo_seleccionado)
+
+        # 6. Mostrar el resultado de la asignación en la interfaz
+        if resultado == -1:
+            messagebox.showerror("Error de Asignación",
+                                 f"No se pudo asignar puerta.\nLa aerolínea '{vuelo_seleccionado.company}' no está dada de alta en los ficheros T1/T2.")
+        elif resultado == -2:
+            messagebox.showwarning("Zona Saturada",
+                                   f"Atención: No quedan puertas libres de tipo Schengen/non-Schengen en la terminal asignada para el vuelo {vuelo_seleccionado.codigo}.")
+        else:
+            # Éxito: 'resultado' contiene el string con el nombre de la puerta (ej: 'C10')
+            messagebox.showinfo("Asignación Exitosa",
+                                f"¡Puerta Asignada Correctamente!\n\n"
+                                f"Vuelo: {vuelo_seleccionado.codigo}\n"
+                                f"Compañía: {vuelo_seleccionado.company}\n"
+                                f"Origen: {vuelo_seleccionado.origin}\n"
+                                f"Puerta Asignada: {resultado}")
+
+            # Refrescar visualmente el estado del aeropuerto si tienes implementada la opción
+            if hasattr(self, 'f_ui_show_airport_status'):
+                self.f_ui_show_airport_status()
     # =====================================================================================
     # SECCIÓN 5: CONTROLADORES DE LOGÍSTICA ORIGINALES (Carga, KMLs y Gráficos)
     # =====================================================================================
