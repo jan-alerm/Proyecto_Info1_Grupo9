@@ -1,28 +1,25 @@
-import math
-import os
 import matplotlib.pyplot as plt
 
+
 class Aircraft:
-# se representan los vuelos mediante: - código de avión
-#                                     - compañía aerea
-#                                     - aeropuerto de origen
-#                                     - hora de llegada
     def __init__(self, codigo, company, origin, time):
-        self.codigo = codigo
-        self.company = company
+        self.id = codigo  # Cambiado de self.codigo a self.id para AssignGate
+        self.airline_icao = company  # Cambiado de self.company a self.airline_icao
         self.origin = origin
         self.time = time
 
-#============================================= CARGA DE VUELOS DESDE FICHERO ===========================================
-def load_arrivals(filename):
-#FUNCIÓN: carga los vuelos almacenados en en un fichero (.txt) y genera una lista de objetos Aircraft
-#         el fichero (.txt) debe seguir el formato: AIRCRAFT ORIGIN ARRIVAL AIRLINE
-#         convierte las coordenadas desde el formato sexagesimal a decimal
-#         si el fichero no existe o una línea no tiene el formato correcto, la línea se IGNORA
+        # Atributo Schengen calculado automáticamente al inicializar el avión
+        schengen_prefixes = [
+            'LO', 'EB', 'LK', 'LC', 'EK', 'EE', 'EF', 'LF', 'ED', 'LG', 'EH', 'LH', 'BI',
+            'LI', 'EV', 'EY', 'EL', 'LM', 'EN', 'EP', 'LP', 'LZ', 'LJ', 'LE', 'ES', 'LS'
+        ]
+        self.schengen = self.origin[:2] in schengen_prefixes
 
+
+def load_arrivals(filename):
     f = open(filename, 'r')
     lista_arrivals = []
-    f.readline()
+    f.readline()  # Lee la cabecera del fichero
     linea = f.readline()
 
     while linea != "":
@@ -33,23 +30,24 @@ def load_arrivals(filename):
             origen = elementos[1]
             tiempo = elementos[2]
             company = elementos[3]
+            # Se crea el objeto pasando los parámetros ordenados
             nueva_llegada = Aircraft(codigo, company, origen, tiempo)
             lista_arrivals.append(nueva_llegada)
-            linea = f.readline()
+
+        # IMPORTANTE: Esta línea va FUERA del bloque IF para evitar bucles infinitos
+        linea = f.readline()
 
     f.close()
     return lista_arrivals
 
-#============================================ DISTRIBUCIÓN HORARIA DE LLEGADAS =========================================
+
 def plot_arrivals(lista_de_vuelos):
-#FUNCIÓN: genera un gráfico de barras con la frecuencia de llegada durante las distintas horas
-#         (solamente se tiene en cuenta la hora de llegada para hacer la distribución horaria)
-#         si la lista está vacía, muestra "error"
     if not lista_de_vuelos:
         print("Error", "No hay datos cargados.")
         return False
 
     try:
+
         horas_formato = []
         for obj in lista_de_vuelos:
             hora_str = obj.time.split(':')[0]
@@ -77,11 +75,8 @@ def plot_arrivals(lista_de_vuelos):
     except AttributeError:
         print("Error", "Los objetos cargados no tienen el atributo '.time'")
 
-#============================================== GUARDAR VUELOS EN FICHERO ==============================================
+
 def save_flights(aircrafts, filename):
-#FUNCIÓN: guarda la información de los vuelos en un fichero .txt utilizando el mismo formato que el original
-#         las partes vacías se representan símbolo "-"
-#         si la lista está vacía no genera ningún fichero
     if not aircrafts:
         return False
     f = open(filename, 'w')
@@ -108,12 +103,10 @@ def save_flights(aircrafts, filename):
     f.close()
     return True
 
-#=========================================== ESTADÍSTICAS DE COMPAÑÍAS AEREAS ==========================================
+
 def plot_airlines(lista_vols):
-#FUNCIÓN: genera un gráfico de barras con el número de vuelos por compañía aerea
-#         si la lista está vacía manda mensaje de error
     if len(lista_vols) == 0:
-        print("Error: El vector está vacío.")
+        print("Error: The vector is empty.")
         return False
 
     nombres_agencias = []
@@ -142,15 +135,13 @@ def plot_airlines(lista_vols):
     plt.ylabel("Number of Aircraft")
     plt.xticks(rotation=45)
     plt.xticks(fontsize=6)
-    plt.grid(axis='y', linestyle='--', alpha=0.3)
+    plt.grid(axis='y', linestyle='--', alpha=0.1)
 
     plt.show()
     return True
 
-#============================================= VUELOS SCHENGEN / NO SCHENGEN ===========================================
-def plot_flights_type(aircrafts):
-#FUNCIÓN: genera un gráfico de barras con la cantidad de vuelos procedentes de países schengen y no schengen
-#         la clasificación se hace con el prefijo del código ICAO
+
+def PlotFlightsType(aircrafts):
     if len(aircrafts) == 0:
         print("Error: The aircraft list is empty.")
         return False
@@ -165,6 +156,7 @@ def plot_flights_type(aircrafts):
 
     for avion in aircrafts:
         prefijo = avion.origin[:2]
+
         if prefijo in schengen_prefixes:
             total_schengen += 1
         else:
@@ -175,7 +167,9 @@ def plot_flights_type(aircrafts):
 
     plt.figure(figsize=(8, 6))
     colores = ['green', 'red']
+
     plt.bar(ejes_x, ejes_y, color=colores, edgecolor='black')
+
     plt.title("Total Flights by Origin Type")
     plt.xlabel("Type of Origin")
     plt.ylabel("Number of Aircraft")
@@ -188,17 +182,13 @@ def plot_flights_type(aircrafts):
 
     return True
 
-#============================================== TRAYECTORIAS EN GOOGLE EARTH ===========================================
+
 def map_flights(aircrafts, airports):
-#FUNCIÓN: genera un fichero .kml para visualizar en Google Earth las trayectorias de llegada de los vuelos hacia LEBL
-#         se representan las trayectorias mediante líneas, diferenciando colores dependiendo si schengen o no schengen
-#         el ficheroo se abre automáticamente en Google Earth
     f = open('flights_map.kml', 'w')
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     f.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n')
     f.write('<Document>\n')
 
-    #coordenadas base LEBL (BARCELONA)
     lat_lebl = 41.297445
     lon_lebl = 2.0832941
 
@@ -206,8 +196,8 @@ def map_flights(aircrafts, airports):
     while i < len(aircrafts):
         avion = aircrafts[i]
 
-        j = 0                                                                       #búsqueda del aeropuerto de origen
-        encontrado = False                                                          #a cada vuelo
+        j = 0
+        encontrado = False
         while j < len(airports):
             if airports[j].code == avion.origin:
                 origen = airports[j]
@@ -228,9 +218,9 @@ def map_flights(aircrafts, airports):
             color = "ff00ff00"  # verde
 
         f.write('<Placemark>\n')
-        f.write('<Style><LineStyle><color>' + color + '</color><width>3</width></LineStyle></Style>\n')             #hace que las lineas sean bien visibles
+        f.write('<Style><LineStyle><color>' + color + '</color><width>3</width></LineStyle></Style>\n')             # hace que las lineas sean bien visibles
         f.write('<LineString>\n')
-        f.write('<tessellate>1</tessellate>\n')                                                                     #mejora la curvatura de las líneas
+        f.write('<tessellate>1</tessellate>\n')                 # mejorar las líneas, la curvatura
         f.write('<coordinates>\n')
 
         f.write(str(origen.lon) + "," + str(origen.lat) + "\n")
@@ -250,44 +240,48 @@ def map_flights(aircrafts, airports):
 
     print("Archivo flights_map.kml creado")
 
-
-    #abrir el Google Earth de manera directa
+    import os
     os.startfile("flights_map.kml")
 
-#================================================== HAVERSINE DISTANCE =================================================
+# --------------------------------------------------- HAVERSINE DISTANCE ------------------------------------------------
+import math
+
+
 def Haversine(lat1, lon1, lat2, lon2):
-#FUNCIÓN: calcula la distancia (km) entre 2 coordenadas geográficas utilizando la fórmula de Haversine
-    R = 6371                                                                                           #radio tierra
-    lat1 = math.radians(lat1)                                                                          #ángulos RADIANES
+    R = 6371  # radio tierra
+    lat1 = math.radians(lat1)  # es importante que los angulos RADIANES
     lon1 = math.radians(lon1)
     lat2 = math.radians(lat2)
     lon2 = math.radians(lon2)
-    # distancia angular entre puntos
-    dif_lat = lat2 - lat1
+
+    dif_lat = lat2 - lat1  # calcular la distancia angular entre puntos
     dif_lon = lon2 - lon1
+
     # fórmula
     a = math.sin(dif_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dif_lon / 2) ** 2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return R * c
 
-#=========================================== VUELOS DE LARGA DISTANCIA (2000KM) ========================================
+
+# ------------------------------------------------ LONG DISTANCE ARRIVALS -----------------------------------------------
 def long_distance_arrivals(aircrafts, airports):
-#FUNCIÓN: devuelve una lista con los vuelos que llegan a LEBL desde un aeropuerto +2000km (inspección especial tras landing)
+    # teniendo en cuenta la lista de aeropuertos y de aviones
+    # devuelve una lista de flights que llegan a LEBL desde un aeropuerto +2000km (special inspection)
     lista_long_flights = []
     i = 0
-    #coordenadas base LEBL (BARCELONA)
+    # coordenadas base de LEBL (BARCELONA)
     lat_lebl = 41.297445
     lon_lebl = 2.0832941
 
-    while i < len(aircrafts):
-        avion = aircrafts[i]
+    while i < len(aircrafts):  # primero miraremos los vuelos uno a uno
+        avion = aircrafts[i]  # "primer" avión a mirar
 
-        j = 0
+        j = 0  # esto hará que busque el aeropuerto de origen
         encontrado = False
-        while j < len(airports):
-            if airports[j].code == avion.origin:
-                origen = airports[j]                                                                                #si --> true, guarda el aeropuerto (+ coordenadas)
+        while j < len(airports):  # recorrido de los aeropuertos
+            if airports[j].code == avion.origin:  # este aeropuerte = origen avión?
+                origen = airports[j]  # si --> true, guarda el aeropuerto (+ coordenadas)
                 encontrado = True
             j += 1
 
