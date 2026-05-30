@@ -13,6 +13,8 @@ class Aircraft:
         self.origin = origin
         self.time = time
 
+        self.destination = ""  # Código ICAO de destino
+        self.departure_time = ""  # Hora de salida (formato hh:mm)
 #============================================= CARGA DE VUELOS DESDE FICHERO ===========================================
 def load_arrivals(filename):
 #FUNCIÓN: carga los vuelos almacenados en en un fichero (.txt) y genera una lista de objetos Aircraft
@@ -39,6 +41,166 @@ def load_arrivals(filename):
 
     f.close()
     return lista_arrivals
+
+
+# ======================================================================================
+# CARGA DE SALIDAS (DEPARTURES)
+# ======================================================================================
+def LoadDepartures(filename):
+    """
+    Abre el fichero de salidas y devuelve una lista de objetos Aircraft
+    inicializados ÚNICAMENTE con los datos de salida.
+    Si el fichero no existe, devuelve una lista vacía y un código de error (-1).
+    """
+    if not os.path.exists(filename):
+        print(f"Error: El archivo {filename} no existe.")
+        return [], -1
+
+    lista_departures = []
+
+    try:
+        f = open(filename, 'r', encoding='utf-8')
+        f.readline()  # Leer la cabecera (AIRCRAFT DESTINATION DEPARTURE AIRLINE)
+        linea = f.readline()
+
+        while linea != "":
+            elementos = linea.split()
+
+            if len(elementos) == 4:
+                codigo = elementos[0]
+                destino = elementos[1]
+                hora_salida = elementos[2]
+                company = elementos[3]
+
+                # Creamos el objeto indicando la salida. Los campos de llegada quedan vacíos de momento.
+                nuevo_vuelo = Aircraft(codigo, company, origin="", time="")
+                nuevo_vuelo.destination = destino
+                nuevo_vuelo.departure_time = hora_salida
+
+                lista_departures.append(nuevo_vuelo)
+
+            linea = f.readline()
+
+        f.close()
+        return lista_departures, 1  # 1 indica éxito
+
+    except Exception as e:
+        print(f"Error procesando el archivo de salidas: {e}")
+        return [], -1
+
+
+# ======================================================================================
+# FUSIÓN DE MOVIMIENTOS (MERGE MOVEMENTS)
+# ======================================================================================
+def MergeMovements(arrivals, departures):
+    """
+    Recibe la lista de llegadas y salidas. Devuelve una lista unificada de objetos Aircraft.
+    Cruza los datos por ID de avión (codigo) siempre que la hora de llegada sea anterior
+    a la de salida. Soporta rotaciones múltiples y aviones pernoctando.
+    """
+    if not arrivals or not departures:
+        print("Error: Una de las listas de entrada está vacía.")
+        return -1
+
+    # Función auxiliar interna para convertir hh:mm a minutos totales y comparar fácil
+    def a_minutos(hora_str):
+        if not hora_str:
+            return -1
+        try:
+            h, m = map(int, hora_str.split(':'))
+            return h * 60 + m
+        except:
+            return -1
+
+    lista_fusionada = []
+
+    # Listas auxiliares para controlar qué elementos ya han sido emparejados
+    salidas_emparejadas = [False] * len(departures)
+    llegadas_emparejadas = [False] * len(arrivals)
+
+    # 1. Intentar emparejar cada llegada con su salida correspondiente y compatible
+    i = 0
+    while i < len(arrivals):
+        llegada = arrivals[i]
+        minutos_llegada = a_minutos(llegada.time)
+
+        # Buscar una salida compatible para este mismo avión
+        j = 0
+        encontrado = False
+        while j < len(departures):
+            salida = departures[j]
+
+            # Si coincide el código y la salida no ha sido asignada todavía
+            if llegada.codigo == salida.codigo and not salidas_emparejadas[j]:
+                minutos_salida = a_minutos(salida.departure_time)
+
+                # El avión debe salir DESPUÉS de haber llegado
+                if minutos_llegada < minutos_salida:
+                    # Creamos el clon fusionado
+                    avion_fusionado = Aircraft(llegada.codigo, llegada.company, llegada.origin, llegada.time)
+                    avion_fusionado.destination = salida.destination
+                    avion_fusionado.departure_time = salida.departure_time
+
+                    lista_fusionada.append(avion_fusionado)
+                    salidas_emparejadas[j] = True
+                    llegadas_emparejadas[i] = True
+                    encontrado = True
+                    break  # Emparejado con la primera salida cronológicamente válida
+            j += 1
+
+        # Si no encontró ninguna salida compatible para este aterrizaje, se añade solo como llegada
+        if not encontrado:
+            avion_solo_llegada = Aircraft(llegada.codigo, llegada.company, llegada.origin, llegada.time)
+            lista_fusionada.append(avion_solo_llegada)
+            llegadas_emparejadas[i] = True
+
+        i += 1
+
+    # 2. Agregar los aviones remanentes que no tuvieron llegada (aviones nocturnos / de base)
+    k = 0
+    while k < len(departures):
+        if not salidas_emparejadas[k]:
+            salida = departures[k]
+            avion_nocturno = Aircraft(salida.codigo, salida.company, origin="", time="")
+            avion_nocturno.destination = salida.destination
+            avion_nocturno.departure_time = salida.departure_time
+
+            lista_fusionada.append(avion_nocturno)
+            salidas_emparejadas[k] = True
+        k += 1
+
+    return lista_fusionada
+
+
+def NightAircraft(aircrafts):
+    """
+    Recibe una lista de objetos Aircraft (generalmente la lista ya unificada)
+    y devuelve una nueva lista con las aeronaves que no tienen hora de llegada
+    (time == ""), pero sí tienen información de salida configurada.
+    Si la lista de entrada está vacía, devuelve un código de error (-1).
+    """
+    # Validación: Si la lista está vacía o es None, devolvemos el código de error
+    if not aircrafts:
+        print("Error: La lista de aeronaves proporcionada está vacía.")
+        return -1
+
+    lista_nocturnos = []
+    i = 0
+
+    # Recorremos la lista usando un bucle while clásico
+    while i < len(aircrafts):
+        avion = aircrafts[i]
+
+        # Un avión pernoctó si NO tiene origen/hora de llegada, pero SÍ tiene hora de salida
+        if (avion.time == "" or avion.origin == "") and avion.departure_time != "":
+            lista_nocturnos.append(avion)
+
+        i += 1
+
+    return lista_nocturnos
+
+
+
 
 #============================================ DISTRIBUCIÓN HORARIA DE LLEGADAS =========================================
 def plot_arrivals(lista_de_vuelos):
