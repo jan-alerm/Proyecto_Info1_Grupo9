@@ -466,3 +466,7 @@ def long_distance_arrivals(aircrafts, airports):
         i += 1
 
     return lista_long_flights
+
+load_departures = LoadDepartures
+merge_movements = MergeMovements
+night_aircraft = NightAircraft
