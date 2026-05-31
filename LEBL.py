@@ -295,3 +295,136 @@ def AssignNightGates(bcn, aircrafts):
         i += 1
 
     return asignados
+
+
+# ======================================================================================
+# FASE 4: ASIGNACIÓN DINÁMICA DE PUERTAS POR FRANJA HORARIA
+# ======================================================================================
+
+def a_minutos_lebl(hora_str):
+    """Función auxiliar para transformar un formato hh:mm a minutos totales desde las 00:00."""
+    if not hora_str or hora_str == "" or hora_str == "-":
+        return -1
+    try:
+        parts = hora_str.split(':')
+        h = int(parts[0])
+        m = int(parts[1])
+        return h * 60 + m
+    except:
+        return -1
+
+
+def AssignGatesAtTime(bcn, aircrafts, time_str):
+
+    minutos_inicio = a_minutos_lebl(time_str)
+    if minutos_inicio == -1:
+        return 0
+    minutos_fin = minutos_inicio + 60  # Ventana temporal de 60 minutos
+
+    # Importación local de la función necesaria de airport.py para cruzar datos geográficos
+    from airport import is_schengen_airport
+
+    # ----------------------------------------------------------------------------------
+    # PASO 1: RECORRER Y LIBERAR LAS GATES CON AVIONES QUE YA HAN DESPEGADO
+    # ----------------------------------------------------------------------------------
+    t = 0
+    while t < len(bcn.terminals):
+        terminal = bcn.terminals[t]
+        a = 0
+        while a < len(terminal.boarding_areas):
+            area = terminal.boarding_areas[a]
+            g = 0
+            while g < len(area.gates):
+                puerta = area.gates[g]
+
+                # Si la puerta está ocupada, verificamos si el avión ya ha salido del aeropuerto
+                if puerta.occupied and puerta.aircraft_id is not None:
+                    matricula_avion = puerta.aircraft_id
+
+                    # Buscamos este avión en el registro general de movimientos
+                    v = 0
+                    ha_despegado = False
+                    while v < len(aircrafts):
+                        avion = aircrafts[v]
+                        if avion.codigo == matricula_avion and avion.departure_time != "":
+                            min_salida = a_minutos_lebl(avion.departure_time)
+                            # Si la hora de salida es anterior o igual a la hora actual simulada, queda libre
+                            if min_salida != -1 and min_salida <= minutos_inicio:
+                                ha_despegado = True
+                                break
+                        v += 1
+
+                    if ha_despegado:
+                        puerta.occupied = False
+                        puerta.aircraft_id = None
+                g += 1
+            a += 1
+        t += 1
+
+    # ----------------------------------------------------------------------------------
+    # PASO 2: ASIGNAR PUERTAS A LOS AVIONES QUE ATERRIZAN EN ESTA HORA
+    # ----------------------------------------------------------------------------------
+    aviones_sin_puerta = 0
+    i = 0
+    while i < len(aircrafts):
+        avion = aircrafts[i]
+
+        # Filtramos los aviones que aterrizan exclusivamente dentro de la hora evaluada
+        if avion.time != "":
+            min_llegada = a_minutos_lebl(avion.time)
+            if minutos_inicio <= min_llegada < minutos_fin:
+
+                # 2.1 Encontrar la terminal de la aerolínea (T1 o T2) usando SearchTerminal
+                terminal_name = SearchTerminal(bcn, avion.company)
+
+                if not terminal_name:
+                    # Si la aerolínea no está registrada, no se puede asignar
+                    aviones_sin_puerta += 1
+                    i += 1
+                    continue
+
+                # 2.2 Determinar la zona requerida (schengen / non-schengen) con el módulo airport
+                if is_schengen_airport(avion.origin):
+                    flight_type = "schengen"
+                else:
+                    flight_type = "non-schengen"
+
+                # 2.3 Buscar la primera puerta libre en la terminal y zona adecuadas
+                asignado = False
+                t_idx = 0
+                while t_idx < len(bcn.terminals):
+                    terminal_actual = bcn.terminals[t_idx]
+
+                    if terminal_actual.name == terminal_name:
+                        b_idx = 0
+                        while b_idx < len(terminal_actual.boarding_areas):
+                            area_actual = terminal_actual.boarding_areas[b_idx]
+
+                            if area_actual.type.lower() == flight_type:
+                                g_idx = 0
+                                while g_idx < len(area_actual.gates):
+                                    gate_actual = area_actual.gates[g_idx]
+
+                                    if not gate_actual.occupied:
+                                        gate_actual.occupied = True
+                                        gate_actual.aircraft_id = avion.codigo
+                                        asignado = True
+                                        break
+                                    g_idx += 1
+                            if asignado:
+                                break
+                            b_idx += 1
+                    if asignado:
+                        break
+                    t_idx += 1
+
+                if not asignado:
+                    aviones_sin_puerta += 1
+
+        i += 1
+
+    return aviones_sin_puerta
+
+
+# Asegurar el mapeo de compatibilidad con minúsculas requerido por la interfaz
+search_terminal = SearchTerminal
