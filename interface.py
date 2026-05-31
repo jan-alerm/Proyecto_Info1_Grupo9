@@ -197,6 +197,8 @@ class AirportApp:
                    command=self.f_ui_night_aircraft).pack(pady=2, padx=5)
         ttk.Button(self.fase4_content, text="Asignación Dinámica por Hora", width=33,
                    command=self.f_ui_assign_gates_at_time).pack(pady=2, padx=5)
+        ttk.Button(self.fase4_content, text="Gráfico: Ocupación Diaria 24h", width=33,
+                   command=self.f_ui_plot_day_occupancy_embedded).pack(pady=2, padx=5)
 
         # Botón de desconexión / cierre seguro de la aplicación (posicionado abajo del todo)
         ttk.Button(self.button_frame, text="SALIR DE LA APLICACIÓN", width=35, command=self.root.quit).pack(
@@ -945,6 +947,46 @@ class AirportApp:
             self.f_ui_gate_occupancy()
 
         ttk.Button(dialog, text="Ejecutar Algoritmo", command=procesar_simulacion, width=20).pack(pady=12)
+
+    def f_ui_plot_day_occupancy_embedded(self):
+        """Función secundaria de interfaz"""
+        if not self.bcn_airport:
+            messagebox.showerror("Error", "Primero debes cargar la estructura del aeropuerto (Función 3).")
+            return
+        if not self.lista_unificada:
+            messagebox.showerror("Error",
+                                 "Se requiere la lista unificada (Merge Movements) para simular el día completo.")
+            return
+
+        # Executem el motor de simulació de 24 hores que hem programat a LEBL
+        horas, ocupados, rechazados = LEBL.PlotDayOccupancy(self.bcn_airport, self.lista_unificada)
+
+        # Netejem el panell d'ajust de la dreta
+        self.clear_plot_frame()
+
+        # Creem el gràfic de Matplotlib amb dos subplots o línies combinades
+        fig, ax = plt.subplots(figsize=(7, 4.5))
+
+        # Línia 1: Portes ocupades en total
+        ax.plot(horas, ocupados, marker='o', color='#2980b9', linewidth=2, label='Puertas Ocupadas')
+        # Línia 2: Avions rebutjats (sense porta)
+        ax.plot(horas, rechazados, marker='x', color='#e74c3c', linewidth=2, linestyle='--', label='Aviones sin Puerta')
+
+        ax.set_title("Puertas Ocupadas VS Aviones sin Puertas", fontsize=12, fontweight='bold', pad=10)
+        ax.set_xlabel("Hora del Día (00:00 - 23:00)", fontsize=10)
+        ax.set_ylabel("Cantidad de Aeronaves por puertas", fontsize=10)
+        ax.set_xticks(range(24))
+        ax.grid(True, linestyle=':', alpha=0.6)
+        ax.legend(loc='upper left')
+
+        # Incrustem el gràfic a l'entorn de Tkinter del panell de la dreta
+        canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Avisem a l'usuari amb un missatge de confirmació
+        messagebox.showinfo("Simulación Diaria",
+                            "Gráfico de ocupación de las 24 horas generado correctamente en el panel de visualización.")
 # =====================================================================================
 # SECCIÓN 6: PUNTO DE ENTRADA AL PROGRAMA (MAIN RUNNER)
 # =====================================================================================
