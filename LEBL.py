@@ -203,14 +203,12 @@ def SearchTerminal(bcn, name):
 
     # Si termina el bucle y no se ha encontrado en ninguna terminal, devolvemos un string vacío
     return ""
-
+# ======================================================================================
+# ASIGNACIÓN DE PUERTAS (SIMPLE)
+# ======================================================================================
 
 def AssignGate(bcn, aircraft):
-    """
-    Given bcn of class BarcelonaAP and an aircraft of class Aircraft, this
-    function looks for the first gate that is not occupied in the correct boarding
-    area for this specific flight.
-    """
+
     # 1. Encontrar la terminal de la aerolínea (T1 o T2)
     terminal_name = SearchTerminal(bcn, aircraft.company)
 
@@ -250,7 +248,9 @@ def AssignGate(bcn, aircraft):
 
     return -2  # Error: No quedan puertas libres en esta zona
 
-#-----------------------------------------------------------------------------------------------------------------------
+# ======================================================================================
+# DETECTOR DE PUERTAS LIBRES
+# ======================================================================================
 def FreeGate(bcn, gate_name):
     i = 0
     while i < len(bcn.terminals):
@@ -277,7 +277,9 @@ def FreeGate(bcn, gate_name):
 
     return False
 
-#----------------------------------------------------------------------------------------------------------------------
+# ======================================================================================
+# ASIGNACIÓN DE PUERTAS NOCTURNAS
+# ======================================================================================
 def AssignNightGates(bcn, aircrafts):
     if not aircrafts:
         return -1
@@ -298,7 +300,7 @@ def AssignNightGates(bcn, aircrafts):
 
 
 # ======================================================================================
-# FASE 4: ASIGNACIÓN DINÁMICA DE PUERTAS POR FRANJA HORARIA
+# ASIGNACIÓN DINÁMICA DE PUERTAS POR FRANJA HORARIA
 # ======================================================================================
 
 def a_minutos_lebl(hora_str):
@@ -428,3 +430,67 @@ def AssignGatesAtTime(bcn, aircrafts, time_str):
 
 # Asegurar el mapeo de compatibilidad con minúsculas requerido por la interfaz
 search_terminal = SearchTerminal
+
+# ======================================================================================
+# SIMULACIÓN COMPLETA DE OCUPACIÓN DIARIA (24 HORAS)
+# ======================================================================================
+
+def PlotDayOccupancy(bcn, aircrafts):
+
+    # 1. Iniciar todas las puertas al estado inicial del día (libres)
+    # Si tienes guardados aviones del inicio, se mantienen, si no, se limpian.
+    t = 0
+    while t < len(bcn.terminals):
+        terminal = bcn.terminals[t]
+        a = 0
+        while a < len(terminal.boarding_areas):
+            area = terminal.boarding_areas[a]
+            g = 0
+            while g < len(area.gates):
+                area.gates[g].occupied = False
+                area.gates[g].aircraft_id = None
+                g += 1
+            a += 1
+        t += 1
+
+    # 2. Listas para almacenar las estadísticas de las 24 horas
+    lista_horas = []
+    lista_ocupados = []
+    lista_rechazados = []
+
+    h = 0
+    while h < 24:
+        # Formateamos la hora en formato estricto de string "hh:00"
+        if h < 10:
+            hora_str = "0" + str(h) + ":00"
+        else:
+            hora_str = str(h) + ":00"
+
+        # Llevamos a cabo la asignación/liberación de esa hora concreta llamando a la función previa
+        rechazados_esta_hora = AssignGatesAtTime(bcn, aircrafts, hora_str)
+
+        # Contamos cuántas puertas totales han quedado ocupadas en el aeropuerto tras esa hora
+        puertas_ocupadas_total = 0
+        t_idx = 0
+        while t_idx < len(bcn.terminals):
+            term = bcn.terminals[t_idx]
+            a_idx = 0
+            while a_idx < len(term.boarding_areas):
+                area_actual = term.boarding_areas[a_idx]
+                g_idx = 0
+                while g_idx < len(area_actual.gates):
+                    if area_actual.gates[g_idx].occupied:
+                        puertas_ocupadas_total += 1
+                    g_idx += 1
+                a_idx += 1
+            t_idx += 1
+
+        # Guardamos los resultados de la muestra de esta hora
+        lista_horas.append(h)
+        lista_ocupados.append(puertas_ocupadas_total)
+        lista_rechazados.append(rechazados_esta_hora)
+
+        h += 1
+
+    # Retornamos los vectores de datos para que la interfaz se encargue de pintarlos
+    return lista_horas, lista_ocupados, lista_rechazados
