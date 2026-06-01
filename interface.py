@@ -222,7 +222,7 @@ class AirportApp:
         ttk.Button(self.flights_content, text="Gráfico: Frecuencia Horaria", width=33,
                    command=self.f_plot_arrivals_embedded).pack(pady=2, padx=5)
         ttk.Button(self.flights_content, text="Gráfico: Vuelos por Aerolínea", width=33,
-                   command=self.f_plot_airlines_embedded).pack(pady=2, padx=5)
+                   command=self.f_ui_plot_airlines_selected).pack(pady=2, padx=5)
         ttk.Button(self.flights_content, text="Gráfico: Vuelos por Origen", width=33,
                    command=self.f_plot_type_embedded).pack(pady=2, padx=5)
         ttk.Button(self.flights_content, text="Guardar Vuelos a Fichero...", width=33,
@@ -298,7 +298,53 @@ class AirportApp:
                   cursor="hand2", command=self.f_ui_exit_with_feedback).pack(fill="x")
 
     # --- MÉTODOS DE ANIMACIÓN DE LOS MENÚS (PACK / PACK_FORGET) ---
+        # =====================================================================================
+        # NOU MÈTODE FASE 1: FILTRATGE DINÀMIC D'AEROLÍNIES SELECCIONADES
+        # =====================================================================================
+    def f_ui_plot_airlines_selected(self):
+            """Función secundaria de interfaz: Pide las aerolíneas al usuario y lanza el gráfico filtrado."""
+            if not self.lista_vuelos:
+                messagebox.showerror("Error", "Primero debes cargar los datos de los vuelos (Pestaña Operaciones).")
+                return
 
+            # Ventana emergente para pedir los códigos de las aerolíneas
+            dialog = tk.Toplevel(self.root)
+            dialog.title("Filtrar Aerolíneas")
+            dialog.geometry("350x150")
+            dialog.configure(bg="#f4f6f7")
+            dialog.resizable(False, False)
+
+            tk.Label(dialog, text="Introduce los códigos ICAO separados por comas:\n(Ejemplo: VLG, IBE, RYR)",
+                     bg="#f4f6f7", font=("Segoe UI", 10)).pack(pady=10)
+
+            entry_airlines = ttk.Entry(dialog, width=25, font=("Segoe UI", 10), justify="center")
+            entry_airlines.pack(pady=2)
+            entry_airlines.insert(0, "VLG, IBE")  # Ejemplo por defecto para guiar al usuario
+
+            def ejecutar_filtro():
+                texto = entry_airlines.get().upper()
+                if not texto:
+                    messagebox.showwarning("Campo vacío", "Introduce al menos un código.", parent=dialog)
+                    return
+
+                # Limpiamos espacios y creamos la lista de seleccionadas de manera limpia con un bucle while
+                lista_sucia = texto.split(',')
+                aerolineas_elegidas = []
+
+                idx = 0
+                while idx < len(lista_sucia):
+                    codigo_limpio = lista_sucia[idx].strip()
+                    if codigo_limpio != "":
+                        aerolineas_elegidas.append(codigo_limpio)
+                    idx += 1
+
+                dialog.destroy()
+
+                # Llamamos a la función modificada que está en tu motor Aircraft.py
+                # Le pasamos tu lista de vuelos cargada y el filtro creado
+                plot_airlines(self.lista_vuelos, airlines_selected=aerolineas_elegidas)
+
+            ttk.Button(dialog, text="Generar Gráfico", command=ejecutar_filtro, width=18).pack(pady=12)
     def f_ui_exit_with_feedback(self):
         """
         Muestra una pantalla de encuesta de satisfacción integrada directamente
