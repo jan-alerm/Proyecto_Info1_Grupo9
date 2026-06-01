@@ -894,7 +894,7 @@ class AirportApp:
         if not code_to_del:
             messagebox.showwarning("Campo Vacío", "Introduce un código ICAO.")
             return
-        res = delete_airport(self.lista_aeropuertos, code_to_del)
+        res = remove_airport(self.lista_aeropuertos, code_to_del)
         if res == 1:
             messagebox.showinfo("Borrado", f"Aeropuerto {code_to_del} eliminado de la memoria.")
             self.delete_entry.delete(0, tk.END)
