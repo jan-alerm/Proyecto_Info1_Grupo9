@@ -15,13 +15,20 @@ class Aircraft:
 
         self.destination = ""  # Código ICAO de destino
         self.departure_time = ""  # Hora de salida (formato hh:mm)
-#============================================= CARGA DE VUELOS DESDE FICHERO ===========================================
-def load_arrivals(filename):
-#FUNCIÓN: carga los vuelos almacenados en en un fichero (.txt) y genera una lista de objetos Aircraft
-#         el fichero (.txt) debe seguir el formato: AIRCRAFT ORIGIN ARRIVAL AIRLINE
-#         convierte las coordenadas desde el formato sexagesimal a decimal
-#         si el fichero no existe o una línea no tiene el formato correcto, la línea se IGNORA
 
+
+# ======================================================================================================================
+# CARGA DE VUELOS DESDE FICHERO (LOAD_ARRIVALS)
+# ======================================================================================================================
+def load_arrivals(filename):
+    """ INPUT:          -> filename: el nombre del fichero que contiene los vuelos de llegada
+
+        OUTPUT:         -> la lista de objetos Aircraft (información de los vuelos) cargados desde el fichero (arrivals)
+
+        DESCRIPTION:    -> lee el fichero de llegadas y crea un objeto Aircraft para cada línea válida encontrada
+                        -> se asegura que el fichero tenga el formato: AIRCRAFT ORIGIN ARRIVAL AIRLINE
+                        -> tener en cuenta que las líneas que no tengan exactamente 4 campos sean ignoradas
+    """
     f = open(filename, 'r')
     lista_arrivals = []
     f.readline()
@@ -29,7 +36,7 @@ def load_arrivals(filename):
 
     while linea != "":
         elementos = linea.split()
-
+        # comprobamos que la línea tiene el formato esperado
         if len(elementos) == 4:
             codigo = elementos[0]
             origen = elementos[1]
@@ -43,15 +50,20 @@ def load_arrivals(filename):
     return lista_arrivals
 
 
-# ======================================================================================
-# CARGA DE SALIDAS (DEPARTURES)
-# ======================================================================================
+# ======================================================================================================================
+# CARGA DE SALIDAS (LOAD_DEPARTURES)
+# ======================================================================================================================
 def LoadDepartures(filename):
+    """ INPUT:          -> filename: el fichero de texto con las salidas programadas
+
+        OUTPUT:         -> lista_departures: una lista de objetos Aircraft
+                        -> status: 1 si la carga ha sido correcta
+                                  -1 si error durante la carga
+
+        DESCRIPTION:    -> lee el fichero de salidas y crea un objeto Aircraft para cada línea válida encontrada
+                        -> los datos de llegada se dejan vacíos y ÚNICAMENTE se inicializan los datos de salida
     """
-    Abre el fichero de salidas y devuelve una lista de objetos Aircraft
-    inicializados ÚNICAMENTE con los datos de salida.
-    Si el fichero no existe, devuelve una lista vacía y un código de error (-1).
-    """
+    # comprobamos que el fichero existe antes de procesarlo
     if not os.path.exists(filename):
         print(f"Error: El archivo {filename} no existe.")
         return [], -1
@@ -60,19 +72,20 @@ def LoadDepartures(filename):
 
     try:
         f = open(filename, 'r', encoding='utf-8')
-        f.readline()  # Leer la cabecera (AIRCRAFT DESTINATION DEPARTURE AIRLINE)
+        # lee la cabecera  y salta la línea (AIRCRAFT DESTINATION DEPARTURE AIRLINE)
+        f.readline()
         linea = f.readline()
 
         while linea != "":
             elementos = linea.split()
-
+            # comprobamos si la línea tiene el formato deseado
             if len(elementos) == 4:
                 codigo = elementos[0]
                 destino = elementos[1]
                 hora_salida = elementos[2]
                 company = elementos[3]
 
-                # Creamos el objeto indicando la salida. Los campos de llegada quedan vacíos de momento.
+                # creamos el objeto Aircraft únicamente con los datos de salida
                 nuevo_vuelo = Aircraft(codigo, company, origin="", time="")
                 nuevo_vuelo.destination = destino
                 nuevo_vuelo.departure_time = hora_salida
@@ -82,27 +95,34 @@ def LoadDepartures(filename):
             linea = f.readline()
 
         f.close()
-        return lista_departures, 1  # 1 indica éxito
+        return lista_departures, 1                                                                      #1 indica éxito
 
     except Exception as e:
         print(f"Error procesando el archivo de salidas: {e}")
-        return [], -1
+        return [], -1                                                                                   #-1 indica error
 
 
-# ======================================================================================
-# FUSIÓN DE MOVIMIENTOS (MERGE MOVEMENTS)
-# ======================================================================================
+# ======================================================================================================================
+# FUSIÓN DE MOVIMIENTOS (MERGE_MOVEMENTS)
+# ======================================================================================================================
 def MergeMovements(arrivals, departures):
+    """ INPUT:          -> arrivals: la lista de vuelos de llegada
+                        -> departures: la lista de vuelos de salida
+
+        OUTPUT:         -> lista_fusionada: la lista de objetos Aircraft con la información de llegadas y salidas combinadas
+                        -> -1: si alguna de las listas de entrada está vacía
+
+        DESCRIPTION:    -> empareja las llegadas y salidas utilizando el identificador del avión (código  ICAO)
+                        -> se asegura que una llegada y una salida solo puedan fusionarse si la hora de llegada es anterior a la de salida
+                        -> la función también tiene en cuenta: - rotaciones múltiples
+                                                               - aviones que SOLO llegan
+                                                               - aviones "nocturnos" o que SOLO salen
     """
-    Recibe la lista de llegadas y salidas. Devuelve una lista unificada de objetos Aircraft.
-    Cruza los datos por ID de avión (codigo) siempre que la hora de llegada sea anterior
-    a la de salida. Soporta rotaciones múltiples y aviones pernoctando.
-    """
+    # comprobamos que ambas listas tienen datos antes de fusionarlas
     if not arrivals or not departures:
         print("Error: Una de las listas de entrada está vacía.")
         return -1
-
-    # Función auxiliar interna para convertir hh:mm a minutos totales y comparar fácil
+    # una función auxiliar para convertir una hora hh:mm a minutos totales y facilitar las comparaciones de tiempo
     def a_minutos(hora_str):
         if not hora_str:
             return -1
@@ -114,7 +134,7 @@ def MergeMovements(arrivals, departures):
 
     lista_fusionada = []
 
-    # Listas auxiliares para controlar qué elementos ya han sido emparejados
+    # listas de control para evitar emparejar elementos que ya hayan sido emparejados
     salidas_emparejadas = [False] * len(departures)
     llegadas_emparejadas = [False] * len(arrivals)
 
@@ -124,19 +144,18 @@ def MergeMovements(arrivals, departures):
         llegada = arrivals[i]
         minutos_llegada = a_minutos(llegada.time)
 
-        # Buscar una salida compatible para este mismo avión
+        # busca una salida compatible para este mismo avión
         j = 0
         encontrado = False
         while j < len(departures):
             salida = departures[j]
 
-            # Si coincide el código y la salida no ha sido asignada todavía
             if llegada.codigo == salida.codigo and not salidas_emparejadas[j]:
                 minutos_salida = a_minutos(salida.departure_time)
 
-                # El avión debe salir DESPUÉS de haber llegado
+                # verificamos que la salida ocurre DESPUÉS de la llegada
                 if minutos_llegada < minutos_salida:
-                    # Creamos el clon fusionado
+                    # creamos un nuevo objeto Aircraft con la información fusiona
                     avion_fusionado = Aircraft(llegada.codigo, llegada.company, llegada.origin, llegada.time)
                     avion_fusionado.destination = salida.destination
                     avion_fusionado.departure_time = salida.departure_time
@@ -145,10 +164,10 @@ def MergeMovements(arrivals, departures):
                     salidas_emparejadas[j] = True
                     llegadas_emparejadas[i] = True
                     encontrado = True
-                    break  # Emparejado con la primera salida cronológicamente válida
+                    break                                      #emparejado con la primera salida cronológicamente válida
             j += 1
 
-        # Si no encontró ninguna salida compatible para este aterrizaje, se añade solo como llegada
+        # si el avión no tiene ninguna salida compatible, se guarda solamente como llegada
         if not encontrado:
             avion_solo_llegada = Aircraft(llegada.codigo, llegada.company, llegada.origin, llegada.time)
             lista_fusionada.append(avion_solo_llegada)
@@ -156,7 +175,7 @@ def MergeMovements(arrivals, departures):
 
         i += 1
 
-    # 2. Agregar los aviones remanentes que no tuvieron llegada (aviones nocturnos / de base)
+    # 2. Añadir los aviones que no han tenido llegada, solamente salida (aviones nocturnos / de base)
     k = 0
     while k < len(departures):
         if not salidas_emparejadas[k]:
@@ -171,15 +190,20 @@ def MergeMovements(arrivals, departures):
 
     return lista_fusionada
 
-
+# ======================================================================================================================
+# DETECCIÓN DE AVIONES NOCTURNOS (NIGHT_AIRCRAFT)
+# ======================================================================================================================
 def NightAircraft(aircrafts):
+    """ INPUT:          -> aircrafts: la lista de objetos Aircraft (normalmente lista ya fusionada)
+
+        OUTPUT:         -> lista_nocturnos: la lista de aviones que han pasado la noche en el aeropuerto
+                        -> -1: si la lista de entrada está vacía
+
+        DESCRIPTION:    -> identifica los aviones que no tienen información de llegada (origin o time == "") pero SÍ tienen una hora de salida asignada
+                        -> estos aviones se considerarán "aeronaves nocturnas" o de base en el aeropuerto
     """
-    Recibe una lista de objetos Aircraft (generalmente la lista ya unificada)
-    y devuelve una nueva lista con las aeronaves que no tienen hora de llegada
-    (time == ""), pero sí tienen información de salida configurada.
-    Si la lista de entrada está vacía, devuelve un código de error (-1).
-    """
-    # Validación: Si la lista está vacía o es None, devolvemos el código de error
+
+    # comprobar que la lista contiene aeronaves antes de procesarla
     if not aircrafts:
         print("Error: La lista de aeronaves proporcionada está vacía.")
         return -1
@@ -187,11 +211,11 @@ def NightAircraft(aircrafts):
     lista_nocturnos = []
     i = 0
 
-    # Recorremos la lista usando un bucle while clásico
+    # recorremos todas las aeronaves de la lista
     while i < len(aircrafts):
         avion = aircrafts[i]
 
-        # Un avión pernoctó si NO tiene origen/hora de llegada, pero SÍ tiene hora de salida
+        # un avión es nocturno o pernoctó si SOLO tiene información de salida, por lo tanto NO tiene origen/hora de llegada
         if (avion.time == "" or avion.origin == "") and avion.departure_time != "":
             lista_nocturnos.append(avion)
 
@@ -200,28 +224,37 @@ def NightAircraft(aircrafts):
     return lista_nocturnos
 
 
-
-
-#============================================ DISTRIBUCIÓN HORARIA DE LLEGADAS =========================================
+# ======================================================================================================================
+# DISTRIBUCIÓN HORARIA DE LLEGADAS (PLOT_ARRIVALS)
+# ======================================================================================================================
 def plot_arrivals(lista_de_vuelos):
-#FUNCIÓN: genera un gráfico de barras con la frecuencia de llegada durante las distintas horas
-#         (solamente se tiene en cuenta la hora de llegada para hacer la distribución horaria)
-#         si la lista está vacía, muestra "error"
+    """ INPUT:          -> lista_de_vuelos: la lista de objetos Aircraft
+
+        OUTPUT:         -> TRUE: si el gráfico se genera correctamente
+                        -> FALSE: si la lista está vacía o ocurre un error
+
+        DESCRIPTION:    -> genera un gráfico de barras que representar la distribución horaria de las llegadas
+                        -> (solamente se tiene en cuenta la hora de llegada para hacer la distribución horaria)
+    """
+    # comprobamos que existen vuelos cargados antes de generar el gráfico
     if not lista_de_vuelos:
         print("Error", "No hay datos cargados.")
         return False
 
     try:
+        # extrae únicamente la hora de llegada hh
         horas_formato = []
         for obj in lista_de_vuelos:
             hora_str = obj.time.split(':')[0]
             horas_formato.append(int(hora_str))
 
+        # contabiliza cuántos vuelos llegan en cada hora del día
         cont_hora = [0] * 24
         for hora in horas_formato:
             if 0 <= hora < 24:
                 cont_hora[hora] += 1
 
+        # datos para representar el gráfico
         eje_x = list(range(24))
         eje_y = cont_hora
 
@@ -230,7 +263,7 @@ def plot_arrivals(lista_de_vuelos):
         plt.title("Vuelos por Hora de Llegada")
         plt.xlabel("Hora del día")
         plt.ylabel("Cantidad de aviones")
-        plt.xticks(eje_x)  # Para que salgan todos los números del 0 al 23
+        plt.xticks(eje_x)                                                   #mostrar todas las horas del día (de 00:00 a 23:00)
         plt.grid(axis='y', linestyle='--', alpha=0.4)
 
         plt.show()
@@ -238,55 +271,67 @@ def plot_arrivals(lista_de_vuelos):
 
     except AttributeError:
         print("Error", "Los objetos cargados no tienen el atributo '.time'")
+        return False
 
-#============================================== GUARDAR VUELOS EN FICHERO ==============================================
+
+# ======================================================================================================================
+# GUARDAR VUELOS EN FICHERO (SAVE_FLIGHTS)
+# ======================================================================================================================
 def save_flights(aircrafts, filename):
-#FUNCIÓN: guarda la información de los vuelos en un fichero .txt utilizando el mismo formato que el original
-#         las partes vacías se representan símbolo "-"
-#         si la lista está vacía no genera ningún fichero
+    """ INPUT:          -> aircrafts: lista de objetos Aircraft
+                        -> filename: nombre del fichero de salida
+
+        OUTPUT:         -> TRUE: si el fichero se genera correctamente
+                        -> FALSE: si la lista está vacía
+
+        DESCRIPTION:    -> guarda la información de los vuelos en un fichero de texto utilizando el mismo formato que el fichero original de entrada
+                        -> los campos vacíos se representan símbolo "-"
+    """
+    # comprobamos que existen vuelos para guardar
     if not aircrafts:
         return False
     f = open(filename, 'w')
-    f.write("AIRCRAFT ORIGIN ARRIVALS AIRLINE\n")
+    f.write("AIRCRAFT ORIGIN ARRIVAL AIRLINE\n")
+    # sustituimos los campos vacíos por "-"
     for aircraft in aircrafts:
-        if aircraft.codigo:
-            aid = aircraft.codigo
-        else:
-            aid = "-"
-        if aircraft.origin:
-            origin = aircraft.origin
-        else:
-            origin = "-"
-        if aircraft.time:
-            time = aircraft.time
-        else:
-            time = "-"
-        if aircraft.company:
-            company = aircraft.company
-        else:
-            company = "-"
+        aid = aircraft.codigo if aircraft.codigo else "-"
+        origin = aircraft.origin if aircraft.origin else "-"
+        time = aircraft.time if aircraft.time else "-"
+        company = aircraft.company if aircraft.company else "-"
 
         f.write(f"{aid} {origin} {time} {company}\n")
     f.close()
     return True
 
-#=========================================== ESTADÍSTICAS DE COMPAÑÍAS AEREAS ==========================================
+
+# ======================================================================================================================
+# ESTADÍSTICAS DE COMPAÑÍAS AEREAS (PLOT_AIRLINES)
+# ======================================================================================================================
 def plot_airlines(lista_vols, airlines_selected=None):
+    """ INPUT:          -> lista_vol: la lista de objetos Aircraft
+
+        OUTPUT:         -> TRUE: si el gráfico se genera correctamente
+                        -> FALSE: si la lista está vacía
+
+        DESCRIPTION:    -> genera un gráfico de barras que representa el número de vuelos operados por cada compañía
+                        -> cada barra corresponde a una compañía, su altura indica la cantidad de vuelos
+    """
+    # comprobamos que existen vuelos cargados antes de generar el gráfico
     if len(lista_vols) == 0:
-        print("Error: El vector está vacío.")
+        print("Error: No hay vuelos cargados.")
         return False
 
     nombres_agencias = []
     conteos = []
 
-    # Recorremos todos los vuelos de la lista
+    # recorremos todos los vuelos de la lista
     v = 0
     while v < len(lista_vols):
         avion = lista_vols[v]
         agencia_actual = avion.company
 
         # --- NUEVO FILTRO ---
-        # Si el usuario ha seleccionado aerolíneas específicas y la actual no está en la lista, la ignoramos
+        # si el usuario ha seleccionado aerolíneas específicas y la actual no está en la lista, la ignoramos
         if airlines_selected is not None:
             incluir = False
             a = 0
@@ -300,7 +345,7 @@ def plot_airlines(lista_vols, airlines_selected=None):
                 continue
         # ---------------------
 
-        # Comprobamos si la agencia ya está registrada en nuestras listas del gráfico
+        # comprobamos si la agencia ya está registrada en nuestras listas del gráfico
         encontrado = False
         i = 0
         while i < len(nombres_agencias):
@@ -316,13 +361,13 @@ def plot_airlines(lista_vols, airlines_selected=None):
 
         v += 1
 
-    # Si después del filtro no queda ninguna aerolínea para pintar
+    # si después del filtro no queda ninguna aerolínea para pintar
     if len(nombres_agencias) == 0:
         print("Error: Ninguna de las aerolíneas seleccionadas tiene vuelos cargados.")
         return False
 
-    # Generación del gráfico con Matplotlib
-    plt.figure(figsize=(12, 5))  # Reducido un poco el ancho para que quede más estético si son pocas
+    # generamos del gráfico
+    plt.figure(figsize=(12, 5))                                                         # reducido un poco el ancho para que quede más estético si son pocas
     plt.bar(nombres_agencias, conteos, color='orange', edgecolor='black')
 
     plt.title("Airlines Statistics (Filtered)")
@@ -334,12 +379,23 @@ def plot_airlines(lista_vols, airlines_selected=None):
 
     plt.show()
     return True
-#============================================= VUELOS SCHENGEN / NO SCHENGEN ===========================================
+
+
+# ======================================================================================================================
+# DISTRIBUCIÓN DE VUELOS SCHENGEN / NO SCHENGEN (PLOT_FLIGHTS_TYPE)
+# ======================================================================================================================
 def plot_flights_type(aircrafts):
-#FUNCIÓN: genera un gráfico de barras con la cantidad de vuelos procedentes de países schengen y no schengen
-#         la clasificación se hace con el prefijo del código ICAO
+    """ INPUT:          -> aircrafts: la lista de objetos Aircraft
+
+        OUTPUT:         -> TRUE: si el gráfico se genera correctamente
+                        -> FALSE: si la lista está vacía
+
+        DESCRIPTION:    -> genera un gráfico de barras que representa ela cantidad de vuelos procedentes de países Schengen o Non-Schengen
+                        -> la clasificación se hace con el prefijo del código ICAO
+    """
+    # comprobamos que existen vuelos cargados antes de generar el gráfico
     if len(aircrafts) == 0:
-        print("Error: The aircraft list is empty.")
+        print("Error: No hay vuelos cargados.")
         return False
 
     schengen_prefixes = [
@@ -350,6 +406,7 @@ def plot_flights_type(aircrafts):
     total_schengen = 0
     total_no_schengen = 0
 
+    # contabiliza los vuelos según el tipo de origen de los vuelos
     for avion in aircrafts:
         prefijo = avion.origin[:2]
         if prefijo in schengen_prefixes:
@@ -357,9 +414,10 @@ def plot_flights_type(aircrafts):
         else:
             total_no_schengen += 1
 
+    # prepara los datos para representar el gráfico
     ejes_x = ['Schengen', 'Non-Schengen']
     ejes_y = [total_schengen, total_no_schengen]
-
+    # genera el gráfico de barras
     plt.figure(figsize=(8, 6))
     colores = ['green', 'red']
     plt.bar(ejes_x, ejes_y, color=colores, edgecolor='black')
@@ -367,6 +425,7 @@ def plot_flights_type(aircrafts):
     plt.xlabel("Type of Origin")
     plt.ylabel("Number of Aircraft")
 
+    # muestra el valor númerico sobre cada barra
     for i in range(len(ejes_y)):
         plt.text(i, ejes_y[i] + 0.1, str(ejes_y[i]), ha='center', va='bottom', fontsize=12)
 
@@ -375,11 +434,19 @@ def plot_flights_type(aircrafts):
 
     return True
 
-#============================================== TRAYECTORIAS EN GOOGLE EARTH ===========================================
+
+# ======================================================================================================================
+# TRAYECTORIAS EN GOOGLE EARTH
+# ======================================================================================================================
 def map_flights(aircrafts, airports):
-#FUNCIÓN: genera un fichero .kml para visualizar en Google Earth las trayectorias de llegada de los vuelos hacia LEBL
-#         se representan las trayectorias mediante líneas, diferenciando colores dependiendo si schengen o no schengen
-#         el ficheroo se abre automáticamente en Google Earth
+    """ INPUT:          -> aircrafts: la lista de objetos Aircraft
+                        -> airports: la lista de objetos Airport
+
+        OUTPUT:         -> genera un fichero "flights_map.kml" y lo abre automáticamente en Google Earth
+
+        DESCRIPTION:    -> representa las trayectorias de llegada hacia LEBL con lineas KML
+                        -> las trayectorias se califican según el tipo (Schengen, Non-Schengen) utilizando colores
+    """
     f = open('flights_map.kml', 'w')
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     f.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n')
@@ -392,19 +459,21 @@ def map_flights(aircrafts, airports):
     i = 0
     while i < len(aircrafts):
         avion = aircrafts[i]
-
-        j = 0                                                                       #búsqueda del aeropuerto de origen
-        encontrado = False                                                          #a cada vuelo
+        # búsqueda del aeropuerto de origen asociado al vuelo
+        j = 0
+        encontrado = False
         while j < len(airports):
             if airports[j].code == avion.origin:
                 origen = airports[j]
                 encontrado = True
             j += 1
+        # ignoramos el vuelo si no se encuentra un aeropuerto de origen
         if not encontrado:
             i += 1
             continue
 
-        prefix = avion.origin[:2]  # esto es lo mismo que al principip
+        # determina el tipo de origen con el prefijo para asignar el color de la trayectoria
+        prefix = avion.origin[:2]
         schengen_prefixes = [
             'LO', 'EB', 'LK', 'LC', 'EK', 'EE', 'EF', 'LF', 'ED', 'LG', 'EH', 'LH', 'BI',
             'LI', 'EV', 'EY', 'EL', 'LM', 'EN', 'EP', 'LP', 'LZ', 'LJ', 'LE', 'ES', 'LS'
@@ -415,9 +484,9 @@ def map_flights(aircrafts, airports):
             color = "ff00ff00"  # verde
 
         f.write('<Placemark>\n')
-        f.write('<Style><LineStyle><color>' + color + '</color><width>3</width></LineStyle></Style>\n')             #hace que las lineas sean bien visibles
+        f.write('<Style><LineStyle><color>' + color + '</color><width>3</width></LineStyle></Style>\n')                 #hace que las lineas sean bien visibles
         f.write('<LineString>\n')
-        f.write('<tessellate>1</tessellate>\n')                                                                     #mejora la curvatura de las líneas
+        f.write('<tessellate>1</tessellate>\n')                                                                         #mejora la curvatura de las líneas
         f.write('<coordinates>\n')
 
         f.write(str(origen.lon) + "," + str(origen.lat) + "\n")
@@ -440,12 +509,17 @@ def map_flights(aircrafts, airports):
     #abrir el Google Earth de manera directa
     os.startfile("flights_map.kml")
 
-#================================================== HAVERSINE DISTANCE =================================================
+
+# ======================================================================================================================
+# HAVERSINE DISTANCE (HAVERSINE)
+# ======================================================================================================================
 def Haversine(lat1, lon1, lat2, lon2):
     """ INPUT:          -> lat1, lon1: coordenadas del origen
                         ->lat2, lon2 -> coordenadas del destino
-    OUTPUT:             -> la distancia entre ambos puntos (que son los aeropuertos) en kilómetros
-    DESCRIPTION:        -> utilizamos la fórmula de Haversine para calcular distancias sobre la Tierra
+
+        OUTPUT:         -> la distancia entre ambos puntos (que son los aeropuertos) en kilómetros
+
+        DESCRIPTION:    -> utilizamos la fórmula de Haversine para calcular distancias sobre la Tierra
     """
     R = 6371                            #radio tierra
     # conversión de grados a radianes
@@ -462,11 +536,16 @@ def Haversine(lat1, lon1, lat2, lon2):
 
     return R * c
 
-#=========================================== VUELOS DE LARGA DISTANCIA (2000KM) ========================================
+
+# ======================================================================================================================
+# VUELOS DE LARGA DISTANCIA (+2000KM)
+# ======================================================================================================================
 def long_distance_arrivals(aircrafts, airports):
     """ INPUT:          -> aircrafts: lista de vuelos
                         -> airports: lista de aeropuertos
+
         OUTPUT:         -> genera una lista de vuelos con origen que se encuentra a +2000km de LEBL
+
         DESCRIPCIÓN:    -> busca el aeropuerto de origen de un vuelo y calcula la distancia mediante "Haversine"
     """
     lista_long_flights = []
