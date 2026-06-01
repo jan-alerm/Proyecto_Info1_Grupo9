@@ -301,50 +301,8 @@ class AirportApp:
         # =====================================================================================
         # NOU MÈTODE FASE 1: FILTRATGE DINÀMIC D'AEROLÍNIES SELECCIONADES
         # =====================================================================================
-    def f_ui_plot_airlines_selected(self):
-            """Función secundaria de interfaz: Pide las aerolíneas al usuario y lanza el gráfico filtrado."""
-            if not self.lista_vuelos:
-                messagebox.showerror("Error", "Primero debes cargar los datos de los vuelos (Pestaña Operaciones).")
-                return
 
-            # Ventana emergente para pedir los códigos de las aerolíneas
-            dialog = tk.Toplevel(self.root)
-            dialog.title("Filtrar Aerolíneas")
-            dialog.geometry("350x150")
-            dialog.configure(bg="#f4f6f7")
-            dialog.resizable(False, False)
 
-            tk.Label(dialog, text="Introduce los códigos ICAO separados por comas:\n(Ejemplo: VLG, IBE, RYR)",
-                     bg="#f4f6f7", font=("Segoe UI", 10)).pack(pady=10)
-
-            entry_airlines = ttk.Entry(dialog, width=25, font=("Segoe UI", 10), justify="center")
-            entry_airlines.pack(pady=2)
-            entry_airlines.insert(0, "VLG, IBE")  # Ejemplo por defecto para guiar al usuario
-
-            def ejecutar_filtro():
-                texto = entry_airlines.get().upper()
-                if not texto:
-                    messagebox.showwarning("Campo vacío", "Introduce al menos un código.", parent=dialog)
-                    return
-
-                # Limpiamos espacios y creamos la lista de seleccionadas de manera limpia con un bucle while
-                lista_sucia = texto.split(',')
-                aerolineas_elegidas = []
-
-                idx = 0
-                while idx < len(lista_sucia):
-                    codigo_limpio = lista_sucia[idx].strip()
-                    if codigo_limpio != "":
-                        aerolineas_elegidas.append(codigo_limpio)
-                    idx += 1
-
-                dialog.destroy()
-
-                # Llamamos a la función modificada que está en tu motor Aircraft.py
-                # Le pasamos tu lista de vuelos cargada y el filtro creado
-                plot_airlines(self.lista_vuelos, airlines_selected=aerolineas_elegidas)
-
-            ttk.Button(dialog, text="Generar Gráfico", command=ejecutar_filtro, width=18).pack(pady=12)
     def f_ui_exit_with_feedback(self):
         """
         Muestra una pantalla de encuesta de satisfacción integrada directamente
@@ -983,7 +941,7 @@ class AirportApp:
             i += 1
 
         fig, ax = plt.subplots(figsize=(6, 4))
-        ax.bar(range(24), horas, color="#2ecc71")
+        ax.bar(range(24), horas, color="#3498db", edgecolor="#2980b9")
         ax.set_title("Frecuencia Horaria de Operaciones")
         ax.set_xlabel("Hora del Día")
         ax.set_ylabel("Vuelos")
@@ -993,47 +951,163 @@ class AirportApp:
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
-    def f_plot_airlines_embedded(self):
-        if not self.lista_vuelos:
-            messagebox.showerror("Error", "Carga datos de vuelos primero.")
+
+
+    def f_ui_plot_airlines_selected(self):
+        """
+        [ORGANIZACIÓN]: Gráfico estadístico de volumen de operación por operador.
+        [AMIGABLE]: Integra un gráfico de BARRAS VERTICALES en el panel derecho sin ventanas.
+        Agrupa las aerolíneas con pocos vuelos bajo la categoría 'OTROS' para optimizar espacio.
+        """
+        # [ROBUSTEZ]: Validación previa para evitar fallos si no hay datos cargados
+        if not hasattr(self, 'lista_vuelos') or not self.lista_vuelos:
+            messagebox.showwarning("Análisis Estadístico",
+                                   "No hay vuelos cargados en memoria. Por favor, cargue un fichero de llegadas primero.")
             return
+
+        # 1. Limpiar por completo el panel derecho antes de dibujar
         self.clear_plot_frame()
-        airlines_dict = {}
-        i = 0
-        while i < len(self.lista_vuelos):
-            comp = self.lista_vuelos[i].company
-            airlines_dict[comp] = airlines_dict.get(comp, 0) + 1
-            i += 1
 
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.bar(airlines_dict.keys(), airlines_dict.values(), color="#9b59b6")
-        ax.set_title("Operaciones Agrupadas por Aerolínea")
-        plt.setp(ax.get_xticklabels(), rotation=45, horizontalalignment='right')
+        # 2. Conteo del total de vuelos por cada aerolínea
+        conteo_aerolineas = {}
+        for avion in self.lista_vuelos:
+            # Soporta tanto objetos Aircraft como diccionarios unidos
+            cia = getattr(avion, 'company', None) or avion.get('company', avion.get('airline', 'UNKNOWN'))
+            cia = str(cia).upper().strip()
+            conteo_aerolineas[cia] = conteo_aerolineas.get(cia, 0) + 1
 
+        # 3. LÓGICA DE AGRUPACIÓN INTELIGENTE (Intercambio y optimización de ejes)
+        # Umbral: Aerolíneas con menos de 5 vuelos se agrupan en "OTROS"
+        UMBRAL_VUELOS = 5
+        aerolineas_filtradas = {}
+        otros_vuelos = 0
+
+        for cia, total in conteo_aerolineas.items():
+            if total < UMBRAL_VUELOS:
+                otros_vuelos += total
+            else:
+                aerolineas_filtradas[cia] = total
+
+        # Si se acumularon vuelos minoritarios, añadimos la categoría agrupada
+        if otros_vuelos > 0:
+            aerolineas_filtradas["OTROS"] = otros_vuelos
+
+        # Ordenar de mayor a menor volumen operativo para que la barra más alta quede a la izquierda
+        aerolineas_ordenadas = sorted(aerolineas_filtradas.items(), key=lambda x: x[1], reverse=True)
+        labels = [item[0] for item in aerolineas_ordenadas]
+        sizes = [item[1] for item in aerolineas_ordenadas]
+
+        # 4. GENERACIÓN DEL GRÁFICO DE BARRAS VERTICALES (Matplotlib incrustado)
+        fig, ax = plt.subplots(figsize=(6, 5), dpi=100)
+
+        # Dibujamos las columnas verticales con los ejes intercambiados
+        barras = ax.bar(labels, sizes, color="#3498db", edgecolor="#2980b9", width=0.6)
+
+        # Añadir el número exacto de vuelos encima de cada barra vertical
+        for barra in barras:
+            alto_barra = barra.get_height()
+            ax.text(barra.get_x() + barra.get_width() / 2, alto_barra + 1,
+                    f'{int(alto_barra)}',
+                    va='bottom', ha='center', fontsize=9, fontweight='bold', color="#2c3e50")
+
+        # Configuración estética de los nuevos ejes
+        ax.set_title("GRÁFICO DE VUELOS POR AEROLÍNEA", fontsize=11, fontweight='bold', pad=15)
+        ax.set_xlabel("Aerolíneas", fontsize=10, fontweight='bold')
+        ax.set_ylabel("Cantidad de Vuelos", fontsize=10, fontweight='bold')
+
+        # Rotamos las etiquetas del eje X ligeramente si hay muchas para evitar solapamientos
+        plt.xticks(rotation=15, ha='right')
+
+        # Ajustar los márgenes para que no se corte ningún texto
+        plt.tight_layout()
+        ax.grid(True, axis='y', linestyle=':', alpha=0.6)
+
+        # 5. INCRUSTACIÓN DIRECTA EN EL ENTORNO GRÁFICO TKINTER
         canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill="both", expand=True)
+        canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Cierre explícito de la figura para proteger la memoria del sistema
+        plt.close(fig)
+
 
     def f_plot_type_embedded(self):
-        if not self.lista_vuelos or not self.lista_aeropuertos:
-            messagebox.showerror("Error", "Se requieren listas de vuelos y aeropuertos cruzadas.")
+        """
+        [ORGANIZACIÓN]: Gráfico estadístico de volumen de operaciones por aeropuerto de origen.
+        [AMIGABLE]: Integra un gráfico de BARRAS VERTICALES en el panel derecho sin ventanas flotantes.
+        Agrupa los aeropuertos con pocos vuelos bajo la categoría 'OTROS' para optimizar el eje X.
+        """
+        # [ROBUSTEZ]: Validación previa para evitar fallos si no hay datos cargados en memoria
+        if not hasattr(self, 'lista_vuelos') or not self.lista_vuelos:
+            messagebox.showwarning("Análisis Estadístico",
+                                   "No hay vuelos cargados en memoria. Por favor, cargue un fichero de llegadas primero.")
             return
+
+        # 1. Limpiar por completo el panel derecho antes de dibujar para evitar solapamientos
         self.clear_plot_frame()
-        origenes = {}
-        i = 0
-        while i < len(self.lista_vuelos):
-            orig = self.lista_vuelos[i].origin
-            origenes[orig] = origenes.get(orig, 0) + 1
-            i += 1
 
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.bar(origenes.keys(), origenes.values(), color="#f1c40f")
-        ax.set_title("Distribución por Aeropuerto de Origen")
-        plt.setp(ax.get_xticklabels(), rotation=45, horizontalalignment='right')
+        # 2. Conteo del total de vuelos provenientes de cada aeropuerto de origen
+        conteo_origenes = {}
+        for avion in self.lista_vuelos:
+            # Soporta tanto si la lista contiene objetos Aircraft como diccionarios
+            origen = getattr(avion, 'origin', None) or avion.get('origin', 'UNKNOWN')
+            origen = str(origen).upper().strip()
+            conteo_origenes[origen] = conteo_origenes.get(origen, 0) + 1
 
+        # 3. LÓGICA DE AGRUPACIÓN INTELIGENTE (Compactación del eje X)
+        # Umbral: Aeropuertos de origen con menos de 5 vuelos se agrupan en "OTROS"
+        UMBRAL_VUELOS = 5
+        origenes_filtrados = {}
+        otros_vuelos = 0
+
+        for origen, total in conteo_origenes.items():
+            if total < UMBRAL_VUELOS:
+                otros_vuelos += total
+            else:
+                origenes_filtrados[origen] = total
+
+        # Si se acumularon vuelos de aeropuertos minoritarios, añadimos la categoría compactada
+        if otros_vuelos > 0:
+            origenes_filtrados["OTROS"] = otros_vuelos
+
+        # Ordenar de mayor a menor volumen operativo (la barra más alta a la izquierda)
+        origenes_ordenadas = sorted(origenes_filtrados.items(), key=lambda x: x[1], reverse=True)
+        labels = [item[0] for item in origenes_ordenadas]
+        sizes = [item[1] for item in origenes_ordenadas]
+
+        # 4. GENERACIÓN DEL GRÁFICO DE BARRAS VERTICALES (Matplotlib incrustado)
+        fig, ax = plt.subplots(figsize=(6, 5), dpi=100)
+
+        # Dibujamos las columnas verticales (Eje X: Aeropuertos, Eje Y: Cantidad de vuelos)
+        barras = ax.bar(labels, sizes, color="#3498db", edgecolor="#2980b9", width=0.6)
+
+        # Añadir el número exacto de vuelos encima de cada columna vertical
+        for barra in barras:
+            alto_barra = barra.get_height()
+            ax.text(barra.get_x() + barra.get_width() / 2, alto_barra + 0.5,
+                    f'{int(alto_barra)}',
+                    va='bottom', ha='center', fontsize=9, fontweight='bold', color="#2c3e50")
+
+        # Configuración estética y de formato del gráfico
+        ax.set_title("VOLUMEN DE VUELOS POR AEROPUERTO DE ORIGEN", fontsize=11, fontweight='bold', pad=15)
+        ax.set_xlabel("Aeropuertos de Origen", fontsize=10, fontweight='bold')
+        ax.set_ylabel("Cantidad de Vuelos Recibidos", fontsize=10, fontweight='bold')
+
+        # Rotamos las etiquetas del eje X (códigos ICAO) para que se lean perfectamente
+        plt.xticks(rotation=30, ha='right')
+
+        # Ajustar los márgenes automáticamente para prevenir recortes de texto
+        plt.tight_layout()
+        ax.grid(True, axis='y', linestyle=':', alpha=0.6)
+
+        # 5. INCRUSTACIÓN DIRECTA EN EL PANEL BLANCO DE TKINTER
         canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill="both", expand=True)
+        canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Cierre de la figura para proteger la memoria RAM
+        plt.close(fig)
+
 
     def f_save_flights(self):
         if not self.lista_vuelos:
