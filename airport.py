@@ -128,26 +128,51 @@ def plot_airports(airports):
     plt.legend()
     plt.show()
 
+#=========================================== MAPA DE AEROPUERTOS EN GOOGLE EARTH =======================================
 def map_airports(airports):
-    f = open("airports_map.kml","w")
+    """ INPUT:          -> airports (la lista de objetos Airport)
+        OUTPUT:         -> genera el fichero airports_map.kml y lo abre automáticamente en Google Earth
+        DESCRIPCIÓN:    -> recorre todos los aeropuertos de la lista y crea un marcador KML para cada uno
+                           (azul para los Schengen y rojo para los No Schengen)
+    """
+    f = open("airports_map.kml", "w")
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     f.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n')
     f.write('<Document>\n')
+    f.write('<name>Airport Map</name>\n')
+
     i = 0
     while i < len(airports):
         a = airports[i]
-        color = "ff0000ff"  # Rojo
-        if a.schengen:
-            color = "ffff0000"  # Azul
+
+        # Recalculamos (usando el ICAO) el atributo Schengen para los aeropuertos antes de generar el mapa.
+        # De esta forma nos aseguramos de que los datos estén "actualizados" incluso si no han ejecutado previamente
+        # la opción de: "Calcular Atributo Schengen" en la interfaz
+        if is_schengen_airport(a.code):
+            color = "ffff0000"      # azul
+        else:
+            color = "ff0000ff"      # rojo
+
+        # generación del marcador KML del aeropuerto
         f.write('<Placemark>\n')
-        f.write('  <name>' + a.code + '</name>\n')
-        f.write('  <Point>\n')
-        f.write('    <coordinates>' + str(a.lon) + ',' + str(a.lat) + '</coordinates>\n')
-        f.write('  </Point>\n')
+        f.write('<Style>\n')
+        f.write('<IconStyle>\n')
+        f.write('<color>' + color + '</color>\n')
+        f.write('</IconStyle>\n')
+        f.write('</Style>\n')
+        # solo mostrar el ICAO como nombre del marcador
+        f.write('<name>' + a.code + '</name>\n')
+        f.write('<Point>\n')
+        f.write('<coordinates>' + str(a.lon) + ',' + str(a.lat) + '</coordinates>\n')
+        f.write('</Point>\n')
         f.write('</Placemark>\n')
         i += 1
 
     f.write('</Document>\n')
     f.write('</kml>\n')
     f.close()
-    print("Archivo 'airports_map.kml' creado. Ábrelo con Google Earth.")
+
+    print("Archivo 'airports_map.kml' creado.")
+
+    import os
+    os.startfile("airports_map.kml")
