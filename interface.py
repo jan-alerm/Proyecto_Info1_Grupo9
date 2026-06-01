@@ -10,7 +10,7 @@ from matplotlib.backends.backend_tkagg import \
 
 # Importación de funciones lógicas de los archivos externos de tu proyecto corporativo
 from airport import *  # Carga de aeropuertos, kml, cálculos geográficos y de espacio Schengen
-from aircraft import *  # Control de aeronaves, operaciones y trazas de vuelos de llegada
+from Aircraft import *  # Control de aeronaves, operaciones y trazas de vuelos de llegada
 import LEBL  # Módulo independiente que administra los terminales y asignaciones de puertas de Barcelona
 
 
@@ -58,10 +58,66 @@ class AirportApp:
         self.main_container.pack(fill="both", expand=True, padx=20,
                                  pady=5)  # Se expande por completo respetando márgenes horizontales
 
-        # Panel izquierdo reservado exclusivamente para los botones de control y menús desplegables
-        self.button_frame = tk.Frame(self.main_container, bg="#f4f6f7")
-        self.button_frame.pack(side="left", fill="y",
-                               padx=10)  # Se alinea a la izquierda y ocupa todo el alto disponible
+        # =====================================================================
+        # PANEL IZQUIERDO CORREGIDO: SCROLL DINÁMICO E INTELIGENTE + BOTÓN FIJO
+        # =====================================================================
+        
+        # 1. Contenedor principal de la barra lateral izquierda (Ancho fijo de 280)
+        self.sidebar_container = tk.Frame(self.main_container, bg="#f4f6f7", width=280)
+        self.sidebar_container.pack(side="left", fill="y", padx=10)
+        self.sidebar_container.pack_propagate(False)  # Evita que el contenedor cambie de tamaño
+
+        # 2. Sub-contenedor para los botones con Scroll (Ocupa todo el alto menos el botón salir)
+        self.menu_scroll_frame = tk.Frame(self.sidebar_container, bg="#f4f6f7")
+        self.menu_scroll_frame.pack(side="top", fill="both", expand=True)
+
+        # 3. La barra de scroll vertical (Alineada a la derecha del sub-contenedor)
+        self.scrollbar_lateral = ttk.Scrollbar(self.menu_scroll_frame, orient="vertical")
+
+        # 4. El Canvas (Alineado a la izquierda, ocupando todo el alto disponible)
+        self.scroll_canvas = tk.Canvas(self.menu_scroll_frame, bg="#f4f6f7", bd=0, highlightthickness=0)
+        self.scroll_canvas.pack(side="left", fill="both", expand=True)
+
+        # Vincular barra y canvas recíprocamente
+        self.scroll_canvas.configure(yscrollcommand=self.scrollbar_lateral.set)
+        self.scrollbar_lateral.configure(command=self.scroll_canvas.yview)
+
+        # 5. El Frame interno real donde se guardan tus botones organizados
+        self.button_frame = tk.Frame(self.scroll_canvas, bg="#f4f6f7")
+        self.canvas_window = self.scroll_canvas.create_window((0, 0), window=self.button_frame, anchor="nw")
+
+        # FUNCIÓN INTELIGENTE: Muestra la barra al 100% de altura SÓLO si hace falta
+        def controlar_visibilidad_scroll(event=None):
+            self.scroll_canvas.configure(scrollregion=self.scroll_canvas.bbox("all"))
+
+            altura_contenido = self.button_frame.winfo_reqheight()
+            altura_disponible = self.scroll_canvas.winfo_height()
+
+            if altura_contenido > altura_disponible and altura_disponible > 1:
+                if not self.scrollbar_lateral.winfo_manager():
+                    # Al empaquetarlo en el sub-contenedor con side="right" y fill="y", toma el 100% del alto
+                    self.scrollbar_lateral.pack(side="right", fill="y")
+            else:
+                if self.scrollbar_lateral.winfo_manager():
+                    self.scrollbar_lateral.pack_forget()
+
+        # Enlaces de eventos para actualizar tamaños dinámicamente al abrir menús
+        self.button_frame.bind("<Configure>", controlar_visibilidad_scroll)
+        self.scroll_canvas.bind("<Configure>",
+                                lambda e: (self.scroll_canvas.itemconfig(self.canvas_window, width=e.width),
+                                           controlar_visibilidad_scroll()))
+
+        # Control de la rueda del ratón
+        def on_mouse_wheel(event):
+            if self.scrollbar_lateral.winfo_manager():
+                self.scroll_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        self.scroll_canvas.bind_all("<MouseWheel>", on_mouse_wheel)
+
+        # 6. CONTENEDOR FIJO INFERIOR PARA EL BOTÓN SALIR (Pegado abajo, sin huecos)
+        self.exit_frame = tk.Frame(self.sidebar_container, bg="#f4f6f7")
+        self.exit_frame.pack(side="bottom", fill="x", pady=(5, 5))
+        # =====================================================================
 
         # Panel derecho (LabelFrame con borde decorativo) destinado a renderizar gráficos y tablas
         self.plot_frame = tk.LabelFrame(self.main_container, text="Panel de Visualización Integrado", bg="white",
@@ -230,19 +286,10 @@ class AirportApp:
         ttk.Button(self.fase4_content, text="Gráfico: Ocupación Diaria 24h", width=33,
                    command=self.f_ui_plot_day_occupancy_embedded).pack(pady=2, padx=5)
 
-        # Botón de desconexión / cierre seguro de la aplicación (posicionado abajo del todo)
-        tk.Button(
-            self.button_frame,
-            text="SALIR DE LA APLICACIÓN",
-            width=35,
-            bg="#C0392B",
-            fg="white",
-            activebackground="#A93226",
-            activeforeground="white",
-            font=("Segoe UI", 10, "bold"),
-            relief="flat",
-            cursor="hand2",
-            command=self.root.quit).pack(side="bottom", pady=15)
+        # Cierre Seguro de Aplicación (Ubicado ahora en el contenedor fijo inferior)
+        tk.Button(self.exit_frame, text="SALIR DE LA APLICACIÓN", width=35, bg="#C0392B", fg="white",
+                  activebackground="#A93226", activeforeground="white", font=("Segoe UI", 10, "bold"), relief="flat",
+                  cursor="hand2", command=self.root.quit).pack(fill="x")
 
     # --- MÉTODOS DE ANIMACIÓN DE LOS MENÚS (PACK / PACK_FORGET) ---
     def toggle_airports_panel(self):
@@ -389,7 +436,7 @@ class AirportApp:
         if not code_to_del:
             messagebox.showwarning("Campo Vacío", "Introduce un código ICAO.")
             return
-        res = remove_airport(self.lista_aeropuertos, code_to_del)
+        res = delete_airport(self.lista_aeropuertos, code_to_del)
         if res == 1:
             messagebox.showinfo("Borrado", f"Aeropuerto {code_to_del} eliminado de la memoria.")
             self.delete_entry.delete(0, tk.END)
@@ -813,7 +860,7 @@ class AirportApp:
             puerta_obtenida = LEBL.AssignGate(self.bcn_airport, vuelo_seleccionado)
             if puerta_obtenida == -1:
                 messagebox.showerror("Error", "La aerolínea del vuelo no está registrada en ninguna terminal.")
-            elif puerta_obtenida == -2:
+            elif puerta_obtenida == False:
                 messagebox.showwarning("Saturación", "No quedan puertas libres en la zona adecuada para este vuelo.")
             else:
                 messagebox.showinfo("Éxito",
