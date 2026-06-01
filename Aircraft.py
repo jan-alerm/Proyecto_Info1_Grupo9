@@ -271,9 +271,7 @@ def save_flights(aircrafts, filename):
     return True
 
 #=========================================== ESTADÍSTICAS DE COMPAÑÍAS AEREAS ==========================================
-def plot_airlines(lista_vols):
-#FUNCIÓN: genera un gráfico de barras con el número de vuelos por compañía aerea
-#         si la lista está vacía manda mensaje de error
+def plot_airlines(lista_vols, airlines_selected=None):
     if len(lista_vols) == 0:
         print("Error: El vector está vacío.")
         return False
@@ -281,34 +279,61 @@ def plot_airlines(lista_vols):
     nombres_agencias = []
     conteos = []
 
-    for avion in lista_vols:
+    # Recorremos todos los vuelos de la lista
+    v = 0
+    while v < len(lista_vols):
+        avion = lista_vols[v]
         agencia_actual = avion.company
 
+        # --- NUEVO FILTRO ---
+        # Si el usuario ha seleccionado aerolíneas específicas y la actual no está en la lista, la ignoramos
+        if airlines_selected is not None:
+            incluir = False
+            a = 0
+            while a < len(airlines_selected):
+                if airlines_selected[a] == agencia_actual:
+                    incluir = True
+                    break
+                a += 1
+            if not incluir:
+                v += 1
+                continue
+        # ---------------------
+
+        # Comprobamos si la agencia ya está registrada en nuestras listas del gráfico
         encontrado = False
         i = 0
         while i < len(nombres_agencias):
             if nombres_agencias[i] == agencia_actual:
                 conteos[i] += 1
                 encontrado = True
+                break
             i += 1
 
         if not encontrado:
             nombres_agencias.append(agencia_actual)
             conteos.append(1)
 
-    plt.figure(figsize=(18, 5))
+        v += 1
+
+    # Si después del filtro no queda ninguna aerolínea para pintar
+    if len(nombres_agencias) == 0:
+        print("Error: Ninguna de las aerolíneas seleccionadas tiene vuelos cargados.")
+        return False
+
+    # Generación del gráfico con Matplotlib
+    plt.figure(figsize=(12, 5))  # Reducido un poco el ancho para que quede más estético si son pocas
     plt.bar(nombres_agencias, conteos, color='orange', edgecolor='black')
 
-    plt.title("Airlines Statistics")
+    plt.title("Airlines Statistics (Filtered)")
     plt.xlabel("Agencies")
     plt.ylabel("Number of Aircraft")
     plt.xticks(rotation=45)
-    plt.xticks(fontsize=6)
+    plt.xticks(fontsize=8)
     plt.grid(axis='y', linestyle='--', alpha=0.3)
 
     plt.show()
     return True
-
 #============================================= VUELOS SCHENGEN / NO SCHENGEN ===========================================
 def plot_flights_type(aircrafts):
 #FUNCIÓN: genera un gráfico de barras con la cantidad de vuelos procedentes de países schengen y no schengen
