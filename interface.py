@@ -61,7 +61,7 @@ class AirportApp:
         # =====================================================================
         # PANEL IZQUIERDO CORREGIDO: SCROLL DINÁMICO E INTELIGENTE + BOTÓN FIJO
         # =====================================================================
-        
+
         # 1. Contenedor principal de la barra lateral izquierda (Ancho fijo de 280)
         self.sidebar_container = tk.Frame(self.main_container, bg="#f4f6f7", width=280)
         self.sidebar_container.pack(side="left", fill="y", padx=10)
@@ -286,12 +286,124 @@ class AirportApp:
         ttk.Button(self.fase4_content, text="Gráfico: Ocupación Diaria 24h", width=33,
                    command=self.f_ui_plot_day_occupancy_embedded).pack(pady=2, padx=5)
 
-        # Cierre Seguro de Aplicación (Ubicado ahora en el contenedor fijo inferior)
+        # Cierre Seguro de Aplicación con encuesta de opinión previa
         tk.Button(self.exit_frame, text="SALIR DE LA APLICACIÓN", width=35, bg="#C0392B", fg="white",
                   activebackground="#A93226", activeforeground="white", font=("Segoe UI", 10, "bold"), relief="flat",
-                  cursor="hand2", command=self.root.quit).pack(fill="x")
+                  cursor="hand2", command=self.f_ui_exit_with_feedback).pack(fill="x")
 
     # --- MÉTODOS DE ANIMACIÓN DE LOS MENÚS (PACK / PACK_FORGET) ---
+
+    def f_ui_exit_with_feedback(self):
+        """
+        Muestra una pantalla de encuesta de satisfacción integrada directamente
+        en el panel derecho de visualización (self.plot_frame).
+        Configuración: Casillas MAXIMIZADAS, textos/bordes negros y mensaje
+        personalizado de disculpa si se selecciona la opción "Mal".
+        """
+        # 1. Limpiamos por completo el panel derecho de gráficos usando tu método existente
+        self.clear_plot_frame()
+
+        # 2. Creamos un contenedor principal grande centrado dentro del panel derecho
+        encuesta_container = tk.Frame(self.plot_frame, bg="white")
+        encuesta_container.pack(expand=True, fill="both", padx=40, pady=40)
+
+        # 3. Etiqueta con la pregunta solicitada (Texto grande en color negro)
+        tk.Label(
+            encuesta_container,
+            text="¿Qué te ha parecido el programa?",
+            font=("Segoe UI", 22, "bold"),  # Tamaño de la pregunta grande
+            bg="white",
+            fg="black"
+        ).pack(pady=(60, 50))
+
+        # 4. Contenedor horizontal para situar los tres botones gigantes de opción
+        btn_frame = tk.Frame(encuesta_container, bg="white")
+        btn_frame.pack(pady=20)
+
+        # 5. Función interna encargada de capturar la opinión, evaluar la respuesta y cerrar
+        def registrar_y_salir(opinion):
+            print(f"Feedback registrado directamente en interfaz: {opinion}")
+
+            # Limpiamos los botones y la pregunta para dar una transición limpia de despedida
+            for widget in encuesta_container.winfo_children():
+                widget.destroy()
+
+            # NUEVO: Evaluamos si la opinión ha sido "Mal" para cambiar el mensaje en pantalla
+            if opinion == "Mal":
+                texto_despedida = "Lamentamos escuchar eso. ¡Trabajaremos duro para mejorar!\nCerrando el sistema..."
+                color_texto = "#c0392b"  # Color rojo oscuro para enfatizar la disculpa
+            else:
+                texto_despedida = "¡Muchas gracias por tu colaboración!\nCerrando el sistema..."
+                color_texto = "black"  # Texto negro estándar para Bien/Normal
+
+            # Mostramos el mensaje correspondiente en el contenedor
+            tk.Label(
+                encuesta_container,
+                text=texto_despedida,
+                font=("Segoe UI", 18, "bold"),
+                bg="white",
+                fg=color_texto
+            ).pack(expand=True)
+
+            # Pausa de 1.5 segundos para que el usuario pueda leer el mensaje antes de salir
+            self.root.after(1500, self.root.quit)
+
+        # 6. DEFINICIÓN DE LOS TRES BOTONES MAXIMIZADOS (FONDO DE COLOR, TEXTO NEGRO Y BORDE NEGRO)
+
+        # Botón "Bien" (Fondo Verde, Letras Negras, Borde Negro - GIGANTE)
+        tk.Button(
+            btn_frame,
+            text="😊 Bien",
+            font=("Segoe UI", 18, "bold"),  # Letra tamaño 18
+            bg="#2ECC71",  # Fondo verde
+            fg="black",  # Caras y texto en NEGRO
+            activebackground="#27AE60",
+            activeforeground="black",
+            width=16,  # Ancho maximizado
+            height=3,  # Alto de triple fila
+            relief="flat",
+            highlightbackground="black",  # Color del borde: NEGRO
+            highlightthickness=1,  # Grosor del borde: 1 píxel
+            cursor="hand2",
+            command=lambda: registrar_y_salir("Bien")
+        ).pack(side="left", padx=20)  # Separación lateral
+
+        # Botón "Normal" (Fondo Amarillo, Letras Negras, Borde Negro - GIGANTE)
+        tk.Button(
+            btn_frame,
+            text="😐 Normal",
+            font=("Segoe UI", 18, "bold"),
+            bg="#F1C40F",  # Fondo amarillo
+            fg="black",
+            activebackground="#D4AC0D",
+            activeforeground="black",
+            width=16,
+            height=3,
+            relief="flat",
+            highlightbackground="black",
+            highlightthickness=1,
+            cursor="hand2",
+            command=lambda: registrar_y_salir("Normal")
+        ).pack(side="left", padx=20)
+
+        # Botón "Mal" (Fondo Rojo, Letras Negras, Borde Negro - GIGANTE)
+        tk.Button(
+            btn_frame,
+            text="🙁 Mal",
+            font=("Segoe UI", 18, "bold"),
+            bg="#E74C3C",  # Fondo rojo
+            fg="black",
+            activebackground="#C0392B",
+            activeforeground="black",
+            width=16,
+            height=3,
+            relief="flat",
+            highlightbackground="black",
+            highlightthickness=1,
+            cursor="hand2",
+            command=lambda: registrar_y_salir("Mal")
+        ).pack(side="left", padx=20)
+
     def toggle_airports_panel(self):
         if self.airports_visible:
             self.airports_content.pack_forget()
