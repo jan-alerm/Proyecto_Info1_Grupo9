@@ -404,7 +404,6 @@ def map_flights(aircrafts, airports):
 
         i += 1
 
-
     f.write('</Document>\n')
     f.write('</kml>\n')
 
@@ -418,9 +417,14 @@ def map_flights(aircrafts, airports):
 
 #================================================== HAVERSINE DISTANCE =================================================
 def Haversine(lat1, lon1, lat2, lon2):
-#FUNCIÓN: calcula la distancia (km) entre 2 coordenadas geográficas utilizando la fórmula de Haversine
-    R = 6371                                                                                           #radio tierra
-    lat1 = math.radians(lat1)                                                                          #ángulos RADIANES
+    """ INPUT:          -> lat1, lon1: coordenadas del origen
+                        ->lat2, lon2 -> coordenadas del destino
+    OUTPUT:             -> la distancia entre ambos puntos (que son los aeropuertos) en kilómetros
+    DESCRIPTION:        -> utilizamos la fórmula de Haversine para calcular distancias sobre la Tierra
+    """
+    R = 6371                            #radio tierra
+    # conversión de grados a radianes
+    lat1 = math.radians(lat1)
     lon1 = math.radians(lon1)
     lat2 = math.radians(lat2)
     lon2 = math.radians(lon2)
@@ -435,31 +439,37 @@ def Haversine(lat1, lon1, lat2, lon2):
 
 #=========================================== VUELOS DE LARGA DISTANCIA (2000KM) ========================================
 def long_distance_arrivals(aircrafts, airports):
-#FUNCIÓN: devuelve una lista con los vuelos que llegan a LEBL desde un aeropuerto +2000km (inspección especial tras landing)
+    """ INPUT:          -> aircrafts: lista de vuelos
+                        -> airports: lista de aeropuertos
+        OUTPUT:         -> genera una lista de vuelos con origen que se encuentra a +2000km de LEBL
+        DESCRIPCIÓN:    -> busca el aeropuerto de origen de un vuelo y calcula la distancia mediante "Haversine"
+    """
     lista_long_flights = []
     i = 0
-    #coordenadas base LEBL (BARCELONA)
+    # coordenadas de referencia de LEBL (aeropuerto BARCELONA)
     lat_lebl = 41.297445
     lon_lebl = 2.0832941
 
     while i < len(aircrafts):
         avion = aircrafts[i]
-
+        # buscar en la lista el aeropuerto de origen del vuelo
         j = 0
         encontrado = False
         while j < len(airports):
             if airports[j].code == avion.origin:
-                origen = airports[j]                                                                                #si --> true, guarda el aeropuerto (+ coordenadas)
+                origen = airports[j]
+                # si se encuentra, guarda el aeropuerto (+ coordenadas)
                 encontrado = True
             j += 1
-
+        # si no se encuentra el aeropuerto, se pasa al siguiente vuelo
         if not encontrado:
             i += 1
             continue
 
+        # calcula la distancia entre el aeropuerto origen y el aeropuerto BARCELONA
         distancia = Haversine(origen.lat, origen.lon, lat_lebl, lon_lebl)
-        # aquí ya se entiende que si no hay aeropuerto = origen no guarda la lon o lat
 
+        #guarda unicamente los vuelos con el aeropuerto de origen a +2000km
         if distancia > 2000:
             lista_long_flights.append(avion)
 
