@@ -217,7 +217,7 @@ class AirportApp:
 
         self.flights_content = tk.Frame(self.button_frame, bg="#f4f6f7", bd=1, relief="groove")
 
-        ttk.Button(self.flights_content, text="Cargar Archivo Operaciones...", width=33,
+        ttk.Button(self.flights_content, text="Cargar Archivo de Llegadas...", width=33,
                    command=self.f_load_arrivals).pack(pady=2, padx=5)
         ttk.Button(self.flights_content, text="Gráfico: Frecuencia Horaria", width=33,
                    command=self.f_plot_arrivals_embedded).pack(pady=2, padx=5)
@@ -263,14 +263,14 @@ class AirportApp:
 
         # ----------------- SUBMENÚ 4: SALIDAS Y FUSIÓN (NUEVA FASE 4) -----------------
         self.btn_toggle_fase4 = tk.Button(self.button_frame,
-            text="▲ SALIDAS Y FUSIÓN (FASE 4)",
-            width=35,
-            bg="#8FB6E8",
-            activebackground="#76A7E2",
-            font=("Segoe UI", 10, "bold"),
-            relief="flat",
-            cursor="hand2",
-            command=self.toggle_fase4_panel)
+                                          text="▲ SALIDAS Y FUSIÓN (FASE 4)",
+                                          width=35,
+                                          bg="#8FB6E8",
+                                          activebackground="#76A7E2",
+                                          font=("Segoe UI", 10, "bold"),
+                                          relief="flat",
+                                          cursor="hand2",
+                                          command=self.toggle_fase4_panel)
         self.btn_toggle_fase4.pack(fill="x", pady=(5, 0))
 
         self.fase4_content = tk.Frame(self.button_frame, bg="#f4f6f7", bd=1, relief="groove")
@@ -285,23 +285,14 @@ class AirportApp:
                    command=self.f_ui_assign_gates_at_time).pack(pady=2, padx=5)
         ttk.Button(self.fase4_content, text="Gráfico: Ocupación Diaria 24h", width=33,
                    command=self.f_ui_plot_day_occupancy_embedded).pack(pady=2, padx=5)
-        # Botón para activar el Radar de Slots de Pista
-        tk.Button(
-            self.button_frame,  # O el contenedor correspondiente a tu submenú abierto
-            text="📡 Radar de Alerta (Slots)",
-            font=("Segoe UI", 10),
-            bg="#34495e",
-            fg="white",
-            anchor="w",
-            padx=20,
-            relief="flat",
-            highlightbackground="black",
-            highlightthickness=1,
-            cursor="hand2",
-            command=self.f_ui_radar_saturacion
-        ).pack(fill="x")
+        ttk.Button(self.fase4_content, text="📡 Radar de Alerta (Slots)", width=33,
+                   command=self.f_ui_radar_saturacion).pack(pady=2, padx=5)
 
-        # Cierre Seguro de Aplicación con encuesta de opinión previa
+        # NUEVO BOTÓN: Auditoría de Conectividad Hub
+        ttk.Button(self.fase4_content, text="📊 Auditoría Hub Analysis", width=33,
+                   command=self.f_ui_hub_analysis).pack(pady=2, padx=5)
+
+        # Cierre Seguro de Aplicación
         tk.Button(self.exit_frame, text="SALIR DE LA APLICACIÓN", width=35, bg="#C0392B", fg="white",
                   activebackground="#A93226", activeforeground="white", font=("Segoe UI", 10, "bold"), relief="flat",
                   cursor="hand2", command=self.f_ui_exit_with_feedback).pack(fill="x")
@@ -580,6 +571,193 @@ class AirportApp:
             bg="#111111",
             fg=color_diag
         ).pack(pady=(10, 15))
+
+    def f_ui_hub_analysis(self):
+        """
+        Analiza las ventanas de tiempo entre vuelos de llegada y salida para el Hub.
+        Versión Explicativa y Didáctica: Desglosa el porqué de los números elevados.
+        """
+        # 1. Escaneo de memoria automatizado
+        vuelos_llegada = []
+        for attr in ['lista_vuelos', 'vuelos', 'lista_llegadas', 'vuelos_llegada']:
+            if hasattr(self, attr) and getattr(self, attr):
+                vuelos_llegada = getattr(self, attr)
+                break
+
+        vuelos_salida = []
+        for attr in ['lista_salidas', 'salidas', 'vuelos_salida', 'lista_unificada']:
+            if hasattr(self, attr) and getattr(self, attr):
+                vuelos_salida = getattr(self, attr)
+                break
+
+        if not vuelos_llegada or not vuelos_salida:
+            messagebox.showerror(
+                "Auditoría de Conectividad",
+                f"Error de datos.\nLlegadas en memoria: {len(vuelos_llegada)}\nSalidas en memoria: {len(vuelos_salida)}"
+            )
+            return
+
+        # 2. Limpiar el panel derecho antes de dibujar
+        self.clear_plot_frame()
+
+        hub_frame = tk.Frame(self.plot_frame, bg="white")
+        hub_frame.pack(expand=True, fill="both", padx=20, pady=10)
+
+        # Encabezado principal corporativo
+        tk.Label(
+            hub_frame,
+            text="📊 AUDITORÍA DE CONECTIVIDAD: HUB ANALYSIS",
+            font=("Segoe UI", 14, "bold"),
+            bg="white",
+            fg="#2c3e50"
+        ).pack(pady=(5, 10))
+
+        # 3. LÓGICA DE EXTRACCIÓN Y PROCESAMIENTO DE DATOS
+        conexiones_viables = 0
+        conexiones_criticas_maletas = 0
+        conexiones_por_aerolinea = {}
+
+        # Lista para guardar un ejemplo didáctico que mostrar en pantalla
+        ejemplos_conexiones = []
+
+        def a_minutos(hora_str):
+            if not hora_str: return -1
+            hora_str = str(hora_str).strip()
+            if " " in hora_str: hora_str = hora_str.split(" ")[1]
+            if ":" not in hora_str: return -1
+            try:
+                partes = hora_str.split(':')
+                return int(partes[0]) * 60 + int(partes[1])
+            except:
+                return -1
+
+        def extraer_datos_vuelo(vuelo):
+            linea = "UNKNOWN"
+            hora = ""
+            id_vuelo = "N/A"
+            if vuelo is None: return linea, hora, id_vuelo
+
+            # Intentar extraer identificador de vuelo (callsign o id)
+            for attr in ['flight_number', 'callsign', 'id', 'vuelo', 'Flight']:
+                if hasattr(vuelo, attr) and getattr(vuelo, attr):
+                    id_vuelo = getattr(vuelo, attr)
+                    break
+
+            if isinstance(vuelo, dict):
+                for k in vuelo.keys():
+                    if k.lower() in ['airline', 'compania', 'operator', 'carrier', 'company', 'aerolinea']:
+                        linea = vuelo[k]
+                    if k.lower() in ['time', 'departure_time', 'arrival_time', 'hora', 'std', 'etd']:
+                        hora = vuelo[k]
+            else:
+                for attr in ['airline', 'compania', 'operator', 'carrier', 'company', 'aerolinea', 'Airline']:
+                    if hasattr(vuelo, attr) and getattr(vuelo, attr):
+                        linea = getattr(vuelo, attr)
+                        break
+                for attr in ['std', 'etd', 'time', 'departure_time', 'arrival_time', 'hora', 'Time', 'schedule_time']:
+                    if hasattr(vuelo, attr) and getattr(vuelo, attr):
+                        hora = getattr(vuelo, attr)
+                        break
+            return str(linea).upper().strip(), str(hora).strip(), str(id_vuelo)
+
+        # Bucle de cruce combinatorio
+        for arr in vuelos_llegada:
+            arr_airline, arr_time_str, arr_id = extraer_datos_vuelo(arr)
+            arr_min = a_minutos(arr_time_str)
+            if arr_min == -1 or arr_airline == "UNKNOWN" or len(arr_airline) < 2:
+                continue
+
+            for dep in vuelos_salida:
+                dep_airline, dep_time_str, dep_id = extraer_datos_vuelo(dep)
+                dep_min = a_minutos(dep_time_str)
+                if dep_min == -1 or dep_airline == "UNKNOWN":
+                    continue
+
+                es_misma_aerolinea = (arr_airline in dep_airline) or (dep_airline in arr_airline) or (
+                            arr_airline[:3] == dep_airline[:3])
+
+                if es_misma_aerolinea:
+                    dif = dep_min - arr_min
+                    if dif < 0: dif += 1440
+
+                    if 0 <= dif < 35:
+                        conexiones_criticas_maletas += 1
+                    elif 35 <= dif <= 240:
+                        conexiones_viables += 1
+                        conexiones_por_aerolinea[arr_airline[:12]] = conexiones_por_aerolinea.get(arr_airline[:12],
+                                                                                                  0) + 1
+
+                        # Capturar un par de ejemplos para la simulación visual interactiva
+                        if len(ejemplos_conexiones) < 3 and arr_id != "N/A" and dep_id != "N/A" and arr_id != dep_id:
+                            ejemplos_conexiones.append(
+                                (arr_airline[:4], arr_id, arr_time_str, dep_id, dep_time_str, dif))
+
+        # Calcular el promedio de opciones de transbordo por avión cargado
+        total_aviones = len(vuelos_llegada)
+        promedio_conexiones = round(conexiones_viables / total_aviones, 1) if total_aviones > 0 else 0
+
+        # 4. RENDERIZADO VISUAL: SECCIÓN KPIs (Bordes negros estrictos)
+        metrics_frame = tk.LabelFrame(hub_frame, text=" Indicadores de Capacidad Combinatoria ",
+                                      font=("Segoe UI", 10, "bold"), bg="#f8f9fa", fg="#34495e", bd=1, relief="solid")
+        metrics_frame.pack(fill="x", padx=10, pady=5)
+
+        kpi1 = tk.Frame(metrics_frame, bg="#dff0d8", highlightbackground="black", highlightthickness=1, width=170,
+                        height=75)
+        kpi1.pack(side="left", expand=True, padx=5, pady=8)
+        kpi1.pack_propagate(False)
+        tk.Label(kpi1, text="Total Rutas Viables", font=("Segoe UI", 9, "bold"), bg="#dff0d8", fg="#1e8449").pack(
+            pady=(8, 0))
+        tk.Label(kpi1, text=str(conexiones_viables), font=("Segoe UI", 14, "bold"), bg="#dff0d8", fg="black").pack()
+
+        # NUEVO KPI: Explicación del promedio por avión individual
+        kpi_promedio = tk.Frame(metrics_frame, bg="#eef2f5", highlightbackground="black", highlightthickness=1,
+                                width=170, height=75)
+        kpi_promedio.pack(side="left", expand=True, padx=5, pady=8)
+        kpi_promedio.pack_propagate(False)
+        tk.Label(kpi_promedio, text="Opciones por Avión", font=("Segoe UI", 9, "bold"), bg="#eef2f5",
+                 fg="#2c3e50").pack(pady=(8, 0))
+        tk.Label(kpi_promedio, text=f"~ {promedio_conexiones}", font=("Segoe UI", 14, "bold"), bg="#eef2f5",
+                 fg="black").pack()
+
+        kpi2 = tk.Frame(metrics_frame, bg="#f2dede", highlightbackground="black", highlightthickness=1, width=170,
+                        height=75)
+        kpi2.pack(side="left", expand=True, padx=5, pady=8)
+        kpi2.pack_propagate(False)
+        tk.Label(kpi2, text="Riesgo Maletas", font=("Segoe UI", 9, "bold"), bg="#f2dede", fg="#c0392b").pack(
+            pady=(8, 0))
+        tk.Label(kpi2, text=str(conexiones_criticas_maletas), font=("Segoe UI", 14, "bold"), bg="#f2dede",
+                 fg="black").pack()
+
+        # 5. PANEL EXPLICATIVO DIDÁCTICO MATEMÁTICO
+        help_frame = tk.LabelFrame(hub_frame, text=" 💡 Entendiendo el resultado (¿Por qué salen miles?) ",
+                                   font=("Segoe UI", 10, "bold"), bg="#fcf8e3", fg="#f39c12", bd=1, relief="solid")
+        help_frame.pack(fill="x", padx=10, pady=5)
+
+        texto_explicativo = (
+            f"El sistema ha cruzado {len(vuelos_llegada)} llegadas contra {len(vuelos_salida)} salidas. El número es alto porque es un cálculo "
+            f"combinatorio 'todos contra todos':\n"
+            f"Cada 1 avión que aterriza permanece en el aeropuerto un tiempo. En esa franja de 4 horas, la misma aerolínea despega "
+            f"múltiples aviones hacia destinos distintos. Un pasajero que llega en ese avión tiene, de media, "
+            f"¿{promedio_conexiones} vuelos diferentes esperándole a los que podría transbordar!"
+        )
+        tk.Label(help_frame, text=texto_explicativo, font=("Segoe UI", 9), bg="#fcf8e3", fg="#7f6000", justify="left",
+                 wraplength=520, padx=8, pady=8).pack(fill="x")
+
+        # 6. PANEL DE EJEMPLO DE CONTROL REAL EN PANTALLA
+        example_frame = tk.LabelFrame(hub_frame, text=" 🔍 Muestra real de cómo se asocian tus datos ",
+                                      font=("Segoe UI", 10, "bold"), bg="white", fg="#2c3e50", bd=1, relief="solid")
+        example_frame.pack(fill="both", expand=True, padx=10, pady=5)
+
+        if ejemplos_conexiones:
+            tk.Label(example_frame,
+                     text=f" {'OP':<5}{'LLEGADA':<12}{'HORA':<8}{'👉':<4}{'SALIDA CONECTADA':<18}{'ESCALA':<8}",
+                     font=("Consolas", 9, "bold"), bg="#eef2f5", fg="black", anchor="w", padx=5).pack(fill="x", pady=2)
+            for cia, id_a, h_a, id_d, h_d, t in ejemplos_conexiones:
+                tk.Label(example_frame, text=f" {cia:<5}{id_a:<12}{h_a:<8}{'✈️':<4}{id_d:<18}{t:<3} min",
+                         font=("Consolas", 9), bg="white", fg="black", anchor="w", padx=8).pack(fill="x", pady=1)
+        else:
+            tk.Label(example_frame, text="Carga datos para visualizar un ejemplo de emparejamiento físico de slots.",
+                     font=("Segoe UI", 9, "italic"), bg="white", fg="gray").pack(pady=15)
 
     def toggle_airports_panel(self):
         if self.airports_visible:
