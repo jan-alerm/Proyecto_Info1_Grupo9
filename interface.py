@@ -285,6 +285,21 @@ class AirportApp:
                    command=self.f_ui_assign_gates_at_time).pack(pady=2, padx=5)
         ttk.Button(self.fase4_content, text="Gráfico: Ocupación Diaria 24h", width=33,
                    command=self.f_ui_plot_day_occupancy_embedded).pack(pady=2, padx=5)
+        # Botón para activar el Radar de Slots de Pista
+        tk.Button(
+            self.button_frame,  # O el contenedor correspondiente a tu submenú abierto
+            text="📡 Radar de Alerta (Slots)",
+            font=("Segoe UI", 10),
+            bg="#34495e",
+            fg="white",
+            anchor="w",
+            padx=20,
+            relief="flat",
+            highlightbackground="black",
+            highlightthickness=1,
+            cursor="hand2",
+            command=self.f_ui_radar_saturacion
+        ).pack(fill="x")
 
         # Cierre Seguro de Aplicación con encuesta de opinión previa
         tk.Button(self.exit_frame, text="SALIR DE LA APLICACIÓN", width=35, bg="#C0392B", fg="white",
@@ -403,6 +418,168 @@ class AirportApp:
             cursor="hand2",
             command=lambda: registrar_y_salir("Mal")
         ).pack(side="left", padx=20)
+
+    def f_ui_radar_saturacion(self):
+        """
+        Analiza de forma predictiva la carga de movimientos y dibuja un radar
+        altamente visual en el panel derecho con barras de carga, semáforos de nivel
+        y una guía explicativa para el usuario.
+        """
+        # 1. Comprobación de seguridad de carga de datos
+        movimientos_activos = []
+        if hasattr(self, 'lista_unificada') and self.lista_unificada:
+            movimientos_activos = self.lista_unificada
+        elif hasattr(self, 'lista_vuelos') and self.lista_vuelos:
+            movimientos_activos = self.lista_vuelos
+        else:
+            messagebox.showerror("Radar de Alerta",
+                                 "No hay operaciones cargadas. Carga vuelos o realiza la fusión de movimientos primero.")
+            return
+
+        # 2. Limpiar el panel derecho completamente
+        self.clear_plot_frame()
+
+        # Configurar un estilo personalizado para que las barras de progreso tengan colores vivos
+        style = ttk.Style()
+        style.theme_use('clam')
+        style.configure("Verde.Horizontal.TProgressbar", foreground='#2ecc71', background='#2ecc71', thickness=12)
+        style.configure("Amarillo.Horizontal.TProgressbar", foreground='#f1c40f', background='#f1c40f', thickness=12)
+        style.configure("Rojo.Horizontal.TProgressbar", foreground='#e74c3c', background='#e74c3c', thickness=12)
+
+        # 3. Contenedor principal oscuro estilo Pantalla de Radar
+        radar_frame = tk.Frame(self.plot_frame, bg="#111111", bd=2, relief="flat")
+        radar_frame.pack(expand=True, fill="both", padx=15, pady=15)
+
+        # Título principal del Radar con estética neón
+        tk.Label(
+            radar_frame,
+            text="📡 RADAR DE SATURACIÓN TEMPORAL (SLOTS EN TIEMPO REAL)",
+            font=("Consolas", 15, "bold"),
+            bg="#111111",
+            fg="#00ff66"
+        ).pack(pady=(15, 5))
+
+        # =====================================================================
+        # NUEVO: PANEL EXPLICATIVO (GUÍA DE USUARIO INTEGRADA)
+        # =====================================================================
+        info_frame = tk.LabelFrame(
+            radar_frame,
+            text=" 📖 ¿CÓMO ENTENDER ESTE RADAR? ",
+            font=("Segoe UI", 10, "bold"),
+            bg="#1c1c1c",
+            fg="#ffffff",
+            relief="solid",
+            bd=1
+        )
+        info_frame.pack(fill="x", padx=20, pady=(5, 10))
+
+        texto_explicativo = (
+            "• ¿Qué es un Slot?: Es la franja horaria asignada para que un avión pueda despegar o aterrizar en el aeropuerto.\n"
+            "• ¿Qué mide este gráfico?: Analiza las 24 horas del día. Cada recuadro representa una hora y monitoriza su nivel de estrés.\n"
+            "• Barras de carga: Indican visualmente el porcentaje de ocupación de la pista según el volumen máximo de vuelos del día.\n"
+            "• Código de colores (Semáforo):\n"
+            "   [ ✓ ESTABLE (Verde) ]: Menos de 4 operaciones por hora. Pista despejada y flujos de tráfico seguros.\n"
+            "   [ ⚡ ADVERTENCIA (Amarillo) ]: Entre 4 y 7 operaciones. Tráfico moderado, requiere atención por posibles colas.\n"
+            "   [ ⚠️ CRÍTICO (Rojo) ]: 8 o más operaciones. Saturación de slots. Riesgo inminente de retrasos y demoras en tierra."
+        )
+
+        tk.Label(
+            info_frame,
+            text=texto_explicativo,
+            font=("Segoe UI", 9),
+            bg="#1c1c1c",
+            fg="#e0e0e0",
+            justify="left",
+            anchor="w"
+        ).pack(fill="x", padx=15, pady=10)
+        # =====================================================================
+
+        # 4. Inicializar y contar frecuencias por hora (00:00 a 23:00)
+        conteo_horas = [0] * 24
+        for m in movimientos_activos:
+            t_str = m.time if hasattr(m, 'time') and m.time else getattr(m, 'departure_time', "00:00")
+            try:
+                h = int(t_str.split(":")[0])
+                if 0 <= h < 24:
+                    conteo_horas[h] += 1
+            except:
+                pass
+
+        # 5. Crear la cuadrícula/matriz de visualización (4 filas x 6 columnas)
+        grid_frame = tk.Frame(radar_frame, bg="#111111")
+        grid_frame.pack(expand=True, pady=5)
+
+        horas_criticas = 0
+        max_vuelos_esperados = max(max(conteo_horas), 1)
+
+        for i in range(24):
+            fila = i // 6
+            columna = i % 6
+            vuelos = conteo_horas[i]
+
+            # Definición del Umbral de Estrés e Identidad Gráfica
+            if vuelos >= 8:  # CRÍTICO (Rojo)
+                color_casilla = "#f2dede"
+                color_texto = "black"
+                estilo_barra = "Rojo.Horizontal.TProgressbar"
+                estado = "⚠️ CRÍTICO"
+                horas_criticas += 1
+            elif vuelos >= 4:  # TRÁFICO MEDIO (Amarillo)
+                color_casilla = "#fcf8e3"
+                color_texto = "black"
+                estilo_barra = "Amarillo.Horizontal.TProgressbar"
+                estado = "⚡ ADVERTENCIA"
+            else:  # ESTABLE (Verde)
+                color_casilla = "#dff0d8"
+                color_texto = "black"
+                estilo_barra = "Verde.Horizontal.TProgressbar"
+                estado = "✓ ESTABLE"
+
+            # Crear el recuadro GIGANTE con BORDE NEGRO ESTRICTO de 2 píxeles
+            casilla = tk.Frame(
+                grid_frame,
+                bg=color_casilla,
+                highlightbackground="black",
+                highlightthickness=2,
+                width=140,
+                height=90
+            )
+            casilla.grid(row=fila, column=columna, padx=8, pady=5)
+            casilla.grid_propagate(False)
+
+            # Elemento 1: Identificador de Hora (Texto Negro)
+            tk.Label(casilla, text=f"🕒 {str(i).zfill(2)}:00 h", font=("Segoe UI", 10, "bold"), bg=color_casilla,
+                     fg=color_texto).pack(pady=(4, 2))
+
+            # Elemento 2: Barra de Progreso Visual
+            progreso = ttk.Progressbar(casilla, orient="horizontal", length=110, mode="determinate", style=estilo_barra)
+            progreso.pack(pady=2)
+            porcentaje_llenado = (vuelos / max_vuelos_esperados) * 100
+            progreso['value'] = porcentaje_llenado
+
+            # Elemento 3: Métrica Numérica (Texto Negro destacado)
+            tk.Label(casilla, text=f"{vuelos} Operaciones", font=("Segoe UI", 10, "bold"), bg=color_casilla,
+                     fg=color_texto).pack()
+
+            # Elemento 4: Estado textual descriptivo
+            tk.Label(casilla, text=estado, font=("Segoe UI", 8, "bold"), bg=color_casilla, fg=color_texto).pack(
+                pady=(2, 2))
+
+        # 6. Barra inferior de Diagnóstico Automatizado
+        if horas_criticas > 0:
+            diagnostico_txt = f"🚨 ALERTA DEL SISTEMA: Se detectan {horas_criticas} franjas horarias saturadas con riesgo inminente de retrasos."
+            color_diag = "#ff3333"
+        else:
+            diagnostico_txt = "🟢 DIAGNÓSTICO: Todos los slots horarios operan con flujos de tráfico seguros y estables."
+            color_diag = "#00ff66"
+
+        tk.Label(
+            radar_frame,
+            text=diagnostico_txt,
+            font=("Segoe UI", 12, "bold"),
+            bg="#111111",
+            fg=color_diag
+        ).pack(pady=(10, 15))
 
     def toggle_airports_panel(self):
         if self.airports_visible:
