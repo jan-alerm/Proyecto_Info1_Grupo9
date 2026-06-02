@@ -2486,7 +2486,7 @@ class AirportApp:
                                                                                                       pady=8)
 
     # =====================================================================================
-    # SECCIÓN 5: CAPA DE INTERFAZ PARA LA NUEVA FASE 4 (SALIDAS Y MERGE CON VALIDACIONES)
+    # CAPA DE INTERFAZ PARA LA NUEVA FASE 4 (SALIDAS Y MERGE CON VALIDACIONES)
     # =====================================================================================
     def f_ui_load_departures(self):
         """Cargar Archivo Salidas con validación estricta de cabecera."""
@@ -2519,72 +2519,7 @@ class AirportApp:
         except Exception as e:
             messagebox.showerror("Error", f"No se pudo leer el archivo: {e}")
 
-#=======================================================================================================================
-    #NUEVO
-    def f_ui_count_departures_by_period(self):
-        """Cuenta las salidas previstas de LEBL entre dos horas indicadas por el usuario."""
-        if not self.lista_salidas:
-            messagebox.showerror("Sin departures", "Primero debes cargar el archivo de departures.")
-            return
 
-        try:
-            hora_inicio = int(self.departure_start_hour_entry.get().strip())
-            hora_fin = int(self.departure_end_hour_entry.get().strip())
-        except ValueError:
-            messagebox.showwarning("Horas no válidas", "Introduce dos números enteros entre 0 y 23.")
-            return
-
-        if not (0 <= hora_inicio <= 23 and 0 <= hora_fin <= 23):
-            messagebox.showwarning("Horas fuera de rango", "Las horas deben estar entre 0 y 23.")
-            return
-
-        def extraer_hora_salida(salida):
-            texto_hora = str(getattr(salida, "departure_time", "")).strip()
-            if not texto_hora:
-                return None
-            try:
-                if ":" in texto_hora:
-                    return int(texto_hora.split(":")[0])
-                if len(texto_hora) >= 2 and texto_hora[:2].isdigit():
-                    return int(texto_hora[:2])
-            except ValueError:
-                return None
-            return None
-
-        salidas_periodo = []
-        for salida in self.lista_salidas:
-            hora_salida = extraer_hora_salida(salida)
-            if hora_salida is None:
-                continue
-
-            if hora_inicio == hora_fin:
-                esta_en_periodo = hora_salida == hora_inicio
-            elif hora_inicio < hora_fin:
-                esta_en_periodo = hora_inicio <= hora_salida < hora_fin
-            else:
-                esta_en_periodo = hora_salida >= hora_inicio or hora_salida < hora_fin
-
-            if esta_en_periodo:
-                salidas_periodo.append(salida)
-
-        if hora_inicio == hora_fin:
-            texto_periodo = f"{hora_inicio:02d}:00 - {hora_inicio:02d}:59"
-        else:
-            texto_periodo = f"{hora_inicio:02d}:00 - antes de las {hora_fin:02d}:00"
-
-        self.show_loaded_table(
-            f"Salidas previstas entre {texto_periodo}",
-            ("Aircraft", "Destino", "Hora salida", "Aerolínea"),
-            [(dep.codigo, dep.destination, dep.departure_time, dep.company) for dep in salidas_periodo]
-        )
-
-        messagebox.showinfo(
-            "Salidas previstas",
-            f"Hay {len(salidas_periodo)} vuelos con salida prevista de LEBL entre {texto_periodo}."
-        )
-
-
-#======================================================================================================================
     def f_ui_merge_movements(self):
         if not self.lista_vuelos:
             messagebox.showerror("Error", "Primero debes cargar los vuelos de llegada (Submenú 2).")
@@ -2923,7 +2858,7 @@ class AirportApp:
 
 
 # =====================================================================================
-# SECCIÓN 6: PUNTO DE ENTRADA AL PROGRAMA (MAIN RUNNER)
+#  PUNTO DE ENTRADA AL PROGRAMA (MAIN RUNNER)
 # =====================================================================================
 if __name__ == "__main__":
     ventana = tk.Tk()  # Instancia la ventana raíz del entorno gráfico de Tkinter
