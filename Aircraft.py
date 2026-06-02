@@ -12,7 +12,6 @@ class Aircraft:
         self.company = company
         self.origin = origin
         self.time = time
-
         self.destination = ""  # Código ICAO de destino
         self.departure_time = ""  # Hora de salida (formato hh:mm)
 
@@ -44,7 +43,7 @@ def load_arrivals(filename):
             company = elementos[3]
             nueva_llegada = Aircraft(codigo, company, origen, tiempo)
             lista_arrivals.append(nueva_llegada)
-            linea = f.readline()
+        linea = f.readline()
 
     f.close()
     return lista_arrivals
