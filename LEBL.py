@@ -27,10 +27,20 @@ class BarcelonaAP:
         self.terminals = []
 
 
+# ======================================================================================================================
+# CREACION DE PUERTAS EN AREA DE EMBARQUE (SET_GATES)
+# ======================================================================================================================
 def set_gates(area, init_gate, end_gate, prefix):
-    """
-    Updates the list of gates of a boarding area.
-    Returns -1 if end_gate is not greater than init_gate.
+    """ INPUT:          -> area: objeto BoardingArea donde se crearan las puertas
+                        -> init_gate: numero inicial de puerta
+                        -> end_gate: numero final de puerta
+                        -> prefix: prefijo que identifica terminal, area y puerta
+
+        OUTPUT:         -> True si las puertas se crean correctamente
+                        -> -1 si el rango de puertas no es valido
+
+        DESCRIPTION:    -> vacia la lista actual de puertas del area
+                        -> crea objetos Gate desde init_gate hasta end_gate con el prefijo indicado
     """
     if end_gate <= init_gate:
         return -1
@@ -44,8 +54,21 @@ def set_gates(area, init_gate, end_gate, prefix):
 
     return True
 
-#=========================================== CARGAR AEROLÍNEAS POR TERMINAL ============================================
+
+# ======================================================================================================================
+# CARGA DE AEROLINEAS POR TERMINAL (LOAD_AIRLINES)
+# ======================================================================================================================
 def load_airlines(terminal, t_name):
+    """ INPUT:          -> terminal: objeto Terminal donde se guardaran las aerolineas
+                        -> t_name: nombre de la terminal (T1 o T2)
+
+        OUTPUT:         -> True si las aerolineas se cargan correctamente
+                        -> False si la terminal no existe o falta el fichero
+
+        DESCRIPTION:    -> abre el fichero T1_Airlines.txt o T2_Airlines.txt segun la terminal
+                        -> extrae los 3 ultimos caracteres de cada linea como codigo ICAO de aerolinea
+                        -> actualiza la lista airline_icao_codes de la terminal
+    """
 #FUNCIÓN: carga las aerolíneas que tocan a una terminal desde los ficheros T1_airlines.txt o T2_airlines.txt
 #         si el fichero no existe, se devuelve false
 
@@ -81,8 +104,20 @@ def load_airlines(terminal, t_name):
     terminal.airline_icao_codes = nueva_lista                               #actualizamos la nueva lista en la terminal
     return True
 
-#=========================================== CARGAR "ESTRUCTURA DEL AEROPUERTO" ========================================
+
+# ======================================================================================================================
+# CARGA DE ESTRUCTURA DEL AEROPUERTO (LOAD_AIRPORT_STRUCTURE)
+# ======================================================================================================================
 def load_airport_structure(filename):
+    """ INPUT:          -> filename: fichero con la estructura de terminales, areas y puertas
+
+        OUTPUT:         -> objeto BarcelonaAP con toda la estructura cargada
+                        -> False si el fichero no se encuentra
+
+        DESCRIPTION:    -> lee el fichero LEBL.txt con terminales y boarding areas
+                        -> crea objetos Terminal, BoardingArea y Gate
+                        -> carga tambien las aerolineas asignadas a cada terminal
+    """
 #FUNCIÓN: crea un "objeto" BarcelonaAP utilizando la información guardada en el fichero LEBL.txt
 #         la función transforma los datos del fichero para construir la estructura que se entiende:
 #          - terminales
@@ -136,9 +171,18 @@ def load_airport_structure(filename):
     f.close()
     return bcn
 
-#=========================================== OCUPACIÓN DE LAS "GATES" TERMINALES =======================================
+
+# ======================================================================================================================
+# OCUPACION DE PUERTAS DE TERMINALES (GATE_OCCUPANCY)
+# ======================================================================================================================
 def gate_occupancy(bcn):
-#FUNCIÓN: devuelve una lista del estado de ocupación de todas las puertas ("gates") del aeropuerto (T1 y T2)
+    """ INPUT:          -> bcn: objeto BarcelonaAP con la estructura del aeropuerto
+
+        OUTPUT:         -> lista con el estado de todas las puertas
+
+        DESCRIPTION:    -> recorre terminales, areas y puertas del aeropuerto
+                        -> devuelve para cada puerta su nombre, estado y avion asignado si existe
+    """
 
     lista_ocupacion = []
     i = 0
@@ -170,9 +214,20 @@ def gate_occupancy(bcn):
 
     return lista_ocupacion
 
-#======================================== COMPROBAR AEROLÍNEA A TERMINAL CORRECTA ======================================
+
+# ======================================================================================================================
+# COMPROBAR AEROLINEA EN TERMINAL (IS_AIRLINE_IN_TERMINAL)
+# ======================================================================================================================
 def is_airline_in_terminal(terminal, name):
-#FUNCIÓN: comprueba si una aerolínea está operando en la terminal correcto ("asignada")
+    """ INPUT:          -> terminal: objeto Terminal que se quiere consultar
+                        -> name: codigo ICAO de la aerolinea
+
+        OUTPUT:         -> True si la aerolinea opera en esa terminal
+                        -> False si no opera, falta el codigo o la lista esta vacia
+
+        DESCRIPTION:    -> busca el codigo de aerolinea dentro de airline_icao_codes
+                        -> permite validar si un vuelo debe operar en una terminal concreta
+    """
     if name == "":
         return False
     if len(terminal.airline_icao_codes) == 0:
@@ -185,8 +240,20 @@ def is_airline_in_terminal(terminal, name):
         i = i + 1
     return False
 
-#-----------------------------------------------------------------------------------------------------------------------
+
+# ======================================================================================================================
+# BUSQUEDA DE TERMINAL POR AEROLINEA (SEARCH_TERMINAL)
+# ======================================================================================================================
 def SearchTerminal(bcn, name):
+    """ INPUT:          -> bcn: objeto BarcelonaAP
+                        -> name: codigo ICAO de la aerolinea
+
+        OUTPUT:         -> nombre de la terminal donde opera la aerolinea
+                        -> string vacio si no se encuentra
+
+        DESCRIPTION:    -> recorre todas las terminales de LEBL
+                        -> utiliza is_airline_in_terminal para encontrar la terminal asignada
+    """
 
     # Iniciamos la i en 0 para recorrer las terminales del aeropuerto
     i = 0
@@ -207,7 +274,22 @@ def SearchTerminal(bcn, name):
 # ASIGNACIÓN DE PUERTAS (SIMPLE)
 # ======================================================================================
 
+
+# ======================================================================================================================
+# ASIGNACION DE PUERTA A UN VUELO (ASSIGN_GATE)
+# ======================================================================================================================
 def AssignGate(bcn, aircraft):
+    """ INPUT:          -> bcn: objeto BarcelonaAP con terminales y puertas
+                        -> aircraft: objeto Aircraft que necesita puerta
+
+        OUTPUT:         -> nombre de la puerta asignada si la operacion tiene exito
+                        -> -1 si la aerolinea no esta registrada
+                        -> -2 si no quedan puertas libres en la zona necesaria
+
+        DESCRIPTION:    -> localiza la terminal de la aerolinea del vuelo
+                        -> determina si el origen del vuelo es Schengen o non-Schengen
+                        -> asigna la primera puerta libre compatible con terminal y tipo de vuelo
+    """
 
     # 1. Encontrar la terminal de la aerolínea (T1 o T2)
     terminal_name = SearchTerminal(bcn, aircraft.company)
@@ -248,10 +330,20 @@ def AssignGate(bcn, aircraft):
 
     return -2  # Error: No quedan puertas libres en esta zona
 
-# ======================================================================================
-# DETECTOR DE PUERTAS LIBRES
-# ======================================================================================
+
+# ======================================================================================================================
+# DETECTOR DE PUERTAS LIBRES DE PUERTA (FREE_GATE)
+# ======================================================================================================================
 def FreeGate(bcn, gate_name):
+    """ INPUT:          -> bcn: objeto BarcelonaAP
+                        -> gate_name: nombre de la puerta que se quiere liberar
+
+        OUTPUT:         -> True si la puerta se encuentra y se libera
+                        -> False si no existe ninguna puerta con ese nombre
+
+        DESCRIPTION:    -> busca la puerta indicada en todas las terminales y areas
+                        -> marca la puerta como libre y elimina el avion asignado
+    """
     i = 0
     while i < len(bcn.terminals):
 
@@ -277,10 +369,20 @@ def FreeGate(bcn, gate_name):
 
     return False
 
-# ======================================================================================
-# ASIGNACIÓN DE PUERTAS NOCTURNAS
-# ======================================================================================
+
+# ======================================================================================================================
+# ASIGNACION DE PUERTAS NOCTURNAS (ASSIGN_NIGHT_GATES)
+# ======================================================================================================================
 def AssignNightGates(bcn, aircrafts):
+    """ INPUT:          -> bcn: objeto BarcelonaAP
+                        -> aircrafts: lista de objetos Aircraft ya fusionados
+
+        OUTPUT:         -> lista de pares [codigo_avion, puerta_asignada]
+                        -> -1 si la lista de aeronaves esta vacia
+
+        DESCRIPTION:    -> detecta aviones que no tienen llegada pero si salida programada
+                        -> asigna puerta a los aviones considerados nocturnos o de base
+    """
     if not aircrafts:
         return -1
     asignados = []
@@ -299,12 +401,18 @@ def AssignNightGates(bcn, aircrafts):
     return asignados
 
 
-# ======================================================================================
-# ASIGNACIÓN DINÁMICA DE PUERTAS POR FRANJA HORARIA
-# ======================================================================================
-
+# ======================================================================================================================
+# ASIGNACIÓN DINÁMICA DE PUERTAS POR FRANJA HORARIA (A_MINUTOS_LEBL)
+# ======================================================================================================================
 def a_minutos_lebl(hora_str):
-    """Función auxiliar para transformar un formato hh:mm a minutos totales desde las 00:00."""
+    """ INPUT:          -> hora_str: hora en formato hh:mm
+
+        OUTPUT:         -> minutos totales desde las 00:00
+                        -> -1 si la hora esta vacia o tiene formato incorrecto
+
+        DESCRIPTION:    -> transforma una hora de texto en un valor numerico comparable
+                        -> facilita ordenar llegadas, salidas y ventanas horarias
+    """
     if not hora_str or hora_str == "" or hora_str == "-":
         return -1
     try:
@@ -316,7 +424,22 @@ def a_minutos_lebl(hora_str):
         return -1
 
 
+
+# ======================================================================================================================
+# ASIGNACION DINAMICA DE PUERTAS POR FRANJA HORARIA (ASSIGN_GATES_AT_TIME)
+# ======================================================================================================================
 def AssignGatesAtTime(bcn, aircrafts, time_str):
+    """ INPUT:          -> bcn: objeto BarcelonaAP
+                        -> aircrafts: lista de objetos Aircraft con llegadas y salidas
+                        -> time_str: hora de inicio de la simulacion en formato hh:mm
+
+        OUTPUT:         -> numero de aviones que no han podido obtener puerta
+                        -> 0 si la hora introducida no es valida
+
+        DESCRIPTION:    -> libera puertas de aviones cuya salida ya ha ocurrido
+                        -> asigna puertas a los vuelos que llegan dentro de la siguiente hora
+                        -> respeta terminal de aerolinea y zona Schengen/non-Schengen
+    """
 
     minutos_inicio = a_minutos_lebl(time_str)
     if minutos_inicio == -1:
@@ -431,11 +554,22 @@ def AssignGatesAtTime(bcn, aircrafts, time_str):
 # Asegurar el mapeo de compatibilidad con minúsculas requerido por la interfaz
 search_terminal = SearchTerminal
 
-# ======================================================================================
-# SIMULACIÓN COMPLETA DE OCUPACIÓN DIARIA (24 HORAS)
-# ======================================================================================
 
+# ======================================================================================================================
+# SIMULACION COMPLETA DE OCUPACION DIARIA (24 HORAS)  (PLOT_DAY_OCCUPANCY)
+# ======================================================================================================================
 def PlotDayOccupancy(bcn, aircrafts):
+    """ INPUT:          -> bcn: objeto BarcelonaAP
+                        -> aircrafts: lista de objetos Aircraft fusionados
+
+        OUTPUT:         -> lista_horas: horas simuladas del dia
+                        -> lista_ocupados: puertas ocupadas en cada hora
+                        -> lista_rechazados: aviones sin puerta en cada hora
+
+        DESCRIPTION:    -> reinicia la ocupacion inicial de todas las puertas
+                        -> ejecuta AssignGatesAtTime para cada una de las 24 horas
+                        -> prepara los datos que la interfaz utilizara para graficar la ocupacion diaria
+    """
 
     # 1. Iniciar todas las puertas al estado inicial del día (libres)
     # Si tienes guardados aviones del inicio, se mantienen, si no, se limpian.
