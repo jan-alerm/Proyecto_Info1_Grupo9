@@ -506,6 +506,51 @@ class AirportApp:
         ttk.Button(self.fase4_content, text="Análisis METAR", width=33,
                    command=self.f_ui_metar_analysis).pack(pady=2, padx=5)
 
+
+        # ---------------------------------------------------------------------
+
+        # ---------------------------------------------------------------------
+        # NUEVA FUNCIÓN: CONTAR PUERTAS POR COMPAÑÍA ANALIZANDO MATRÍCULAS
+        # ---------------------------------------------------------------------
+        airline_gate_zone = tk.LabelFrame(
+            self.gates_content,
+            text="Ocupación por Aerolínea",
+            bg="#f4f6f7",
+            font=("Segoe UI", 9, "bold")
+        )
+        airline_gate_zone.pack(fill="x", pady=8, padx=5)
+
+        # Etiqueta de texto descriptiva
+        tk.Label(
+            airline_gate_zone,
+            text="Código OACI:",
+            bg="#f4f6f7"
+        ).grid(row=0, column=0, sticky="w", padx=5, pady=5)
+
+        # Cuadro de texto para introducir el identificador de la aerolínea (ej: VLG, RYR, IBE...)
+        self.airline_search_entry = ttk.Entry(
+            airline_gate_zone,
+            width=10,
+            font=("Segoe UI", 10, "bold")
+        )
+        self.airline_search_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        # Botón para ejecutar la consulta
+        ttk.Button(
+            airline_gate_zone,
+            text="Consultar",
+            width=10,
+            command=self.f_count_airline_aircraft_in_gates
+        ).grid(row=0, column=2, padx=5, pady=5)
+
+        # Pequeña instrucción en itálica para guiar al operador
+        tk.Label(
+            airline_gate_zone,
+            text="Ingresa las 3 letras (ej: VLG) para analizar las matrículas.",
+            bg="#f4f6f7",
+            fg="#5d6d7e",
+            font=("Segoe UI", 8, "italic")
+        ).grid(row=1, column=0, columnspan=3, sticky="w", padx=5, pady=(0, 5))
         # Cierre Seguro de Aplicación
         tk.Button(self.exit_frame, text="SALIR DE LA APLICACIÓN", width=35, bg="#C0392B", fg="white",
                   activebackground="#A93226", activeforeground="white", font=("Segoe UI", 10, "bold"), relief="flat",
@@ -515,6 +560,57 @@ class AirportApp:
         # =====================================================================================
         # NOU MÈTODE FASE 1: FILTRATGE DINÀMIC D'AEROLÍNIES SELECCIONADES
         # =====================================================================================
+
+    def f_count_airline_aircraft_in_gates(self):
+        """
+        Recupera el código OACI de aerolínea del cuadro de texto, valida que el
+        aeropuerto esté cargado y ejecuta la función nativa de LEBL encargada de
+        extraer e identificar las compañías a partir de los aircraft_id (matrículas).
+        """
+        # 1. Validamos que la simulación de la estructura (bcn_airport) esté activa
+        if not self.bcn_airport:
+            messagebox.showwarning(
+                "Estructura no detectada",
+                "Debe cargar primero la estructura del aeropuerto de Barcelona (LEBL) para realizar esta consulta."
+            )
+            return
+        if not self.lista_vuelos:
+            messagebox.showwarning(
+                "Estructura no detectada",
+                "Debe cargar primero la estructura del aeropuerto de Barcelona (LEBL) para realizar esta consulta."
+            )
+            return
+
+        # 2. Obtenemos el texto introducido, removemos espacios y lo convertimos a mayúsculas
+        airline_code = self.airline_search_entry.get().strip().upper()
+        lista_arrivals = self.lista_vuelos
+        # 3. Controlamos que el campo no se haya dejado en blanco
+        if not airline_code:
+            messagebox.showwarning(
+                "Entrada vacía",
+                "Por favor, introduce el código OACI de 3 letras de la aerolínea a consultar (ej: VLG)."
+            )
+            return
+
+        try:
+            # 4. Invocamos directamente tu función en LEBL.py. Esta es la que se encarga
+            # de recorrer las terminales y verificar los prefijos/sufijos de 'gate.aircraft_id'.
+            aviones_detectados = LEBL.count_airline_gates(self.bcn_airport, airline_code, lista_arrivals)
+
+
+
+            # 5. Mostramos una ventana emergente informativa limpia con el conteo preciso
+            messagebox.showinfo(
+                "Conteo de Aeronaves",
+                f"Aerolínea: {airline_code}\n\nActualmente hay {aviones_detectados} aeronave(s) ocupando puertas de embarque en el aeropuerto."
+            )
+
+        except Exception as e:
+            messagebox.showerror(
+                "Error en Consulta",
+                f"Ocurrió un error inesperado al procesar el conteo de puertas:\n{e}"
+            )
+
 
 
     def f_ui_exit_with_feedback(self):
