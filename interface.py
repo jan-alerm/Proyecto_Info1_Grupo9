@@ -8,7 +8,7 @@ import struct
 import tempfile
 import wave
 import winsound
-import tkinter as tk  # Librería base para la interfaz gráfica (ventanas, botones, frames)
+import tkinter as tk                                                                                                    # Librería base para la interfaz gráfica (ventanas, botones, frames)
 from tkinter import messagebox, filedialog, ttk
 
 # Librería para generar gráficos de barras y frecuencias
@@ -27,30 +27,30 @@ import LEBL                                                                     
 class AirportApp:
     def __init__(self, root):
         """Constructor de la aplicación: Inicializa la ventana y todos sus componentes."""
-        self.root = root  # Guarda la ventana raíz de la aplicación
-        self.root.title("Proyecto de Informática I - Grupo 9")  # Asigna el título en la barra superior de la ventana
-        self.root.state("zoomed")  # Define el tamaño inicial de la pantalla en píxeles (Ancho x Alto)
+        self.root = root
+        self.root.title("Proyecto de Informática I - Grupo 9")
+        self.root.state("zoomed")
         self.root.resizable(True, True)
-        self.root.configure(bg="#f4f6f7")  # Establece un color de fondo gris claro para una apariencia moderna
+        self.root.configure(bg="#f4f6f7")
 
         # --- Variables de control de Datos ---
-        self.lista_aeropuertos = []  # Lista dinámica en memoria que guardará los objetos tipo Airport cargados
-        self.lista_vuelos = []  # Lista dinámica en memoria que guardará los vuelos (Aircraft) leídos del log
-        self.bcn_airport = None  # Espacio reservado para almacenar el objeto estructural BarcelonaAP de LEBL
+        self.lista_aeropuertos = []                                                                                     # Lista dinámica en memoria que guardará los objetos tipo Airport cargados
+        self.lista_vuelos = []                                                                                          # Lista dinámica en memoria que guardará los vuelos (Aircraft) leídos del log
+        self.bcn_airport = None                                                                                         # Espacio reservado para almacenar el objeto estructural BarcelonaAP de LEBL
 
         # --- NUEVAS VARIABLES DE LA FASE 4 ---
-        self.lista_salidas = []  # Guardará los datos leídos de las salidas (Departures)
-        self.lista_unificada = []  # Guardará el merge de movimientos (arrivals + departures)
-        self.airlines_loaded_terminals = set()  # Controla que se hayan cargado T1 y T2 antes de marcar el botón
+        self.lista_salidas = []                                                                                         # Guardará los datos leídos de las salidas (Departures)
+        self.lista_unificada = []                                                                                       # Guardará el merge de movimientos (arrivals + departures)
+        self.airlines_loaded_terminals = set()                                                                          # Controla que se hayan cargado T1 y T2 antes de marcar el botón
         self.selected_airport_code = None
         self.music_enabled = True
         self.music_file = None
 
         # --- Estados de visibilidad para los menús colapsables (Acordeón) ---
-        self.airports_visible = False  # False = Menú de Aeropuertos cerrado al arrancar
-        self.flights_visible = False  # False = Menú de Operaciones cerrado al arrancar
-        self.gates_visible = False  # False = Menú del Administrator de Puertas cerrado al arrancar
-        self.fase4_visible = False  # False = Menú de Fase 4 cerrado al arrancar
+        self.airports_visible = False
+        self.flights_visible = False
+        self.gates_visible = False
+        self.fase4_visible = False
 
         # --- Configuración del motor de estilos tipográficos y visuales (TTK) ---
         self.style = ttk.Style()
@@ -58,13 +58,16 @@ class AirportApp:
             self.style.theme_use("clam")
         except tk.TclError:
             pass
-        self.style.configure("TButton", font=("Segoe UI", 10), padding=4)  # Diseño por defecto para botones generales
+        # Diseño por defecto para botones generales
+        self.style.configure("TButton", font=("Segoe UI", 10), padding=4)
+        # Botón de fichero ya cargado
         self.style.configure("Loaded.TButton", font=("Segoe UI", 10), padding=4,
-                             background="#D7E8F7", foreground="#1f3f5b")  # Botón de fichero ya cargado
+                             background="#D7E8F7", foreground="#1f3f5b")
         self.style.map("Loaded.TButton", background=[("active", "#C9DFF0")])
         self.style.configure("Header.TLabel",font=("Segoe UI", 16, "bold"),background="#f4f6f7",foreground="#355C8A")
+        # Estilo de botones cabecera de menú
         self.style.configure("Toggle.TButton", font=("Segoe UI", 10, "bold"),
-                             foreground="#2c3e50")  # Estilo de botones cabecera de menú
+                             foreground="#2c3e50")
 
         # --- Layout Estructural y Paneles Principales (Distribución en Pantalla) ---
         # Etiqueta del título superior con control de sonido
@@ -82,18 +85,19 @@ class AirportApp:
         # Contenedor maestro que agrupa el panel izquierdo (botones) y el derecho (gráficos)
         self.main_container = tk.Frame(self.root, bg="#f4f6f7")
         self.main_container.pack(fill="both", expand=True, padx=20,
-                                 pady=5)  # Se expande por completo respetando márgenes horizontales
+                                 pady=5)
+        # Se expande por completo respetando márgenes horizontales
 
-        # =====================================================================
+        # ==============================================================================================================
         # PANEL IZQUIERDO CORREGIDO: SCROLL DINÁMICO E INTELIGENTE + BOTÓN FIJO
-        # =====================================================================
+        # ==============================================================================================================
 
         # 1. Contenedor principal de la barra lateral izquierda (Ancho fijo de 280)
         self.sidebar_container = tk.Frame(self.main_container, bg="#f4f6f7", width=280)
         self.sidebar_container.pack(side="left", fill="y", padx=10)
         self.sidebar_container.pack_propagate(False)  # Evita que el contenedor cambie de tamaño
 
-        # 2. Sub-contenedor para los botones con Scroll (Ocupa todo el alto menos el botón salir)
+        # 2. Sub-contenedor para los botones con Scroll (Ocupa el alto completo menos el botón salir)
         self.menu_scroll_frame = tk.Frame(self.sidebar_container, bg="#f4f6f7")
         self.menu_scroll_frame.pack(side="top", fill="both", expand=True)
 
@@ -113,7 +117,7 @@ class AirportApp:
         self.canvas_window = self.scroll_canvas.create_window((0, 0), window=self.button_frame, anchor="nw")
 
         # FUNCIÓN INTELIGENTE: Muestra la barra al 100% de altura SÓLO si hace falta
-        def controlar_visibilidad_scroll(event=None):
+        def controlar_visibilidad_scroll(event = None):
             self.scroll_canvas.configure(scrollregion=self.scroll_canvas.bbox("all"))
 
             altura_contenido = self.button_frame.winfo_reqheight()
@@ -144,13 +148,12 @@ class AirportApp:
         # 6. CONTENEDOR FIJO INFERIOR PARA EL BOTÓN SALIR (Pegado abajo, sin huecos)
         self.exit_frame = tk.Frame(self.sidebar_container, bg="#f4f6f7")
         self.exit_frame.pack(side="bottom", fill="x", pady=(5, 5))
-        # =====================================================================
 
+        # ==============================================================================================================
         # Panel derecho (LabelFrame con borde decorativo) destinado a renderizar gráficos y tablas
         self.plot_frame = tk.LabelFrame(self.main_container, text="Panel de Visualización Integrado", bg="white",
                                         font=("Segoe UI", 11, "bold"), fg="#34495e")
-        self.plot_frame.pack(side="right", fill="both", expand=True, padx=10,
-                             pady=5)  # Ocupa todo el espacio sobrante de la derecha
+        self.plot_frame.pack(side="right", fill="both", expand=True, padx=10, pady=5)                                   # Ocupa todo el espacio sobrante de la derecha
 
         # Inicializa los mensajes en el visor central y construye la arquitectura de botones
         self.show_welcome_message()
@@ -158,28 +161,25 @@ class AirportApp:
 
         # --- Barra de Estado Inferior ---
         self.status_var = tk.StringVar(
-            value="Estado: OK | Aeropuertos: 0 | Vuelos (Arr): 0 | Salidas (Dep): 0 | Estructura LEBL: No cargada")  # Variable de texto interactiva de Tkinter
+            value="Estado: OK | Aeropuertos: 0 | Vuelos (Arr): 0 | Salidas (Dep): 0 | Estructura LEBL: No cargada")     # Variable de texto interactiva de Tkinter
         self.status_bar = tk.Label(self.root, textvariable=self.status_var, bd=1, relief="sunken", anchor="w",
-                                   font=("Consolas", 10),
-                                   bg="#bdc3c7")  # Control visual estilo "hundido" (sunken) alineado a la izquierda (w)
-        self.status_bar.pack(side="bottom",
-                             fill="x")  # Se adhiere al fondo absoluto de la ventana expandiéndose horizontalmente
+                                   font=("Consolas", 10), bg="#bdc3c7")                                                 # Control visual estilo "hundido" (sunken) alineado a la izquierda (w)
+        self.status_bar.pack(side="bottom", fill="x")                                                                   # Se adhiere al fondo absoluto de la ventana expandiéndose horizontalmente
 
     def show_welcome_message(self):
         """Muestra una etiqueta informativa por defecto en el panel derecho cuando este se encuentra vacío."""
         self.no_plot_label = tk.Label(
             self.plot_frame,
             text="Panel libre.\n\nSelecciona cualquier operación del menú de control lateral.",
-            font=("Segoe UI", 11, "italic"), bg="white", fg="#7f8c8d"
-        )
-        self.no_plot_label.pack(expand=True)  # Se centra automáticamente en el panel de gráficos
+            font=("Segoe UI", 11, "italic"), bg="white", fg="#7f8c8d")
+        self.no_plot_label.pack(expand=True)                                                                            # Se centra automáticamente en el panel de gráficos
 
     def clear_plot_frame(self):
         """Limpia de forma segura todos los elementos visuales del panel derecho antes de pintar un nuevo gráfico o tabla."""
         if hasattr(self, 'no_plot_label') and self.no_plot_label.winfo_exists():
-            self.no_plot_label.pack_forget()  # Oculta la etiqueta de bienvenida si sigue activa
+            self.no_plot_label.pack_forget()                                                                            # Oculta la etiqueta de bienvenida si sigue activa
         for widget in self.plot_frame.winfo_children():
-            widget.destroy()  # Destruye físicamente cada botón, tabla o gráfico que esté en el panel derecho
+            widget.destroy()                                                                                            # Destruye físicamente cada botón, tabla o gráfico que esté en el panel derecho
         if hasattr(self, "status_bar"):
             self.status_bar.pack(side="bottom", fill="x")
             self.status_bar.lift()
@@ -273,13 +273,7 @@ class AirportApp:
         container = tk.Frame(self.plot_frame, bg="white")
         container.pack(fill="both", expand=True, padx=10, pady=10)
 
-        tk.Label(
-            container,
-            text=title,
-            font=("Segoe UI", 12, "bold"),
-            bg="white",
-            fg="#355C8A"
-        ).pack(anchor="w", pady=(0, 8))
+        tk.Label(container, text=title, font=("Segoe UI", 12, "bold"), bg="white", fg="#355C8A").pack(anchor="w", pady=(0, 8))
 
         table_frame = tk.Frame(container, bg="white")
         table_frame.pack(fill="both", expand=True)
@@ -289,13 +283,7 @@ class AirportApp:
         scrollbar_x = ttk.Scrollbar(table_frame, orient="horizontal")
         scrollbar_x.pack(side="bottom", fill="x")
 
-        tabla = ttk.Treeview(
-            table_frame,
-            columns=columns,
-            show="headings",
-            yscrollcommand=scrollbar_y.set,
-            xscrollcommand=scrollbar_x.set
-        )
+        tabla = ttk.Treeview(table_frame, columns=columns, show="headings", yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
         tabla.pack(fill="both", expand=True)
         scrollbar_y.config(command=tabla.yview)
         scrollbar_x.config(command=tabla.xview)
@@ -332,9 +320,9 @@ class AirportApp:
             messagebox.showerror("Google Earth", f"No se pudo abrir el KML automáticamente:\n{e}")
             return False
 
-    # =====================================================================================
-    # SECCIÓN 3: CONSTRUCCIÓN DEL MENÚ INTERACTIVO (CONTRACCIONES Y DESPLEGABLES)
-    # =====================================================================================
+    # ==================================================================================================================
+    # CONSTRUCCIÓN DEL MENÚ INTERACTIVO (CONTRACCIONES Y DESPLEGABLES)
+    # ==================================================================================================================
     def setup_collapsible_menus(self):
         """Crea los botones principales y los subpaneles ocultos para simular un menú de pestañas colapsables."""
 
@@ -355,35 +343,63 @@ class AirportApp:
         self.btn_load_airports_file = ttk.Button(self.airports_content, text="Cargar fichero de Aeropuertos", width=33,
                                                  command=self.f_load)
         self.btn_load_airports_file.pack(pady=2, padx=5)
-        ttk.Button(self.airports_content, text="Calcular atributo Schengen (automatic)", width=33,
+        ttk.Button(self.airports_content,
+                   text="Calcular atributo Schengen (automatic)",
+                   width=33,
                    command=self.f_schengen).pack(pady=2, padx=5)
-        ttk.Button(self.airports_content, text="Schengen (manual)", width=33, command=self.f_manual_schengen).pack(
-            pady=2, padx=5)
-        ttk.Button(self.airports_content, text="Mostrar tabla de aeropuertos", width=33, command=self.f_show).pack(
-            pady=2, padx=5)
-        ttk.Button(self.airports_content, text="Gráfico: Schengen / No Schengen", width=33,
+        ttk.Button(self.airports_content,
+                   text="Schengen (manual)",
+                   width=33,
+                   command=self.f_manual_schengen).pack(pady=2, padx=5)
+        ttk.Button(self.airports_content,
+                   text="Mostrar tabla de aeropuertos",
+                   width=33,
+                   command=self.f_show).pack(pady=2, padx=5)
+        ttk.Button(self.airports_content,
+                   text="Gráfico: Schengen / No Schengen",
+                   width=33,
                    command=self.f_plot_airports_embedded).pack(pady=2, padx=5)
-        ttk.Button(self.airports_content, text="Exportar Schengen a fichero", width=33, command=self.f_save).pack(
-            pady=2, padx=5)
-        ttk.Button(self.airports_content, text="Abrir aeropuertos en Google Earth", width=33, command=self.f_map).pack(
-            pady=2, padx=5)
+        ttk.Button(self.airports_content,
+                   text="Exportar Schengen a fichero",
+                   width=33,
+                   command=self.f_save).pack(pady=2, padx=5)
+        ttk.Button(self.airports_content,
+                   text="Abrir aeropuertos en Google Earth",
+                   width=33,
+                   command=self.f_map).pack(pady=2, padx=5)
 
-        airport_edit_zone = tk.LabelFrame(self.airports_content, text="Gestionar aeropuerto por ICAO", bg="#f4f6f7",
+        airport_edit_zone = tk.LabelFrame(self.airports_content,
+                                          text="Gestionar aeropuerto por ICAO",
+                                          bg="#f4f6f7",
                                           font=("Segoe UI", 9, "bold"))
         airport_edit_zone.pack(fill="x", pady=5, padx=(2, 5))
 
-        tk.Label(airport_edit_zone, text="Eliminar ICAO:", bg="#f4f6f7").grid(row=0, column=0, sticky="w", padx=(2, 2), pady=2)
+        tk.Label(airport_edit_zone,
+                 text="Eliminar ICAO:",
+                 bg="#f4f6f7").grid(row=0, column=0, sticky="w", padx=(2, 2), pady=2)
         self.delete_entry = ttk.Entry(airport_edit_zone, width=8, font=("Segoe UI", 10, "bold"))
         self.delete_entry.grid(row=0, column=1, padx=2, pady=2)
-        ttk.Button(airport_edit_zone, text="Eliminar", width=7, command=self.f_delete_dynamic).grid(row=0, column=2, padx=2, pady=2)
-        tk.Label(airport_edit_zone, text="Para eliminar solo hace falta el código ICAO.", bg="#f4f6f7", fg="#5d6d7e",
+        ttk.Button(airport_edit_zone,
+                   text="Eliminar",
+                   width=7, command=self.f_delete_dynamic).grid(row=0, column=2, padx=2, pady=2)
+        tk.Label(airport_edit_zone,
+                 text="Para eliminar solo hace falta el código ICAO.",
+                 bg="#f4f6f7", fg="#5d6d7e",
                  font=("Segoe UI", 8, "italic")).grid(row=1, column=0, columnspan=4, sticky="w", padx=2, pady=(0, 4))
 
-        tk.Label(airport_edit_zone, text="Añadir ICAO:", bg="#f4f6f7").grid(row=2, column=0, sticky="w", padx=(2, 2), pady=2)
+        tk.Label(airport_edit_zone,
+                 text="Añadir ICAO:",
+                 bg="#f4f6f7").grid(row=2, column=0, sticky="w", padx=(2, 2), pady=2)
         self.add_code_entry = ttk.Entry(airport_edit_zone, width=8, font=("Segoe UI", 10, "bold"))
         self.add_code_entry.grid(row=2, column=1, padx=2, pady=2)
-        ttk.Button(airport_edit_zone, text="Añadir", width=7, command=self.f_add_dynamic).grid(row=2, column=2, padx=2, pady=2)
-        tk.Label(airport_edit_zone, text="Para añadir hacen falta código ICAO, latitud y longitud.", bg="#f4f6f7", fg="#5d6d7e",
+        ttk.Button(airport_edit_zone,
+                   text="Añadir",
+                   width=7,
+                   command=self.f_add_dynamic).grid(row=2, column=2, padx=2, pady=2)
+        tk.Label(airport_edit_zone,
+                 text="Para añadir hacen falta código ICAO, latitud y longitud.",
+                 bg="#f4f6f7",
+                 fg="#5d6d7e",
                  font=("Segoe UI", 8, "italic")).grid(row=3, column=0, columnspan=4, sticky="w", padx=2, pady=(0, 4))
 
         coords_frame = tk.Frame(airport_edit_zone, bg="#f4f6f7")
@@ -422,17 +438,29 @@ class AirportApp:
         self.btn_load_arrivals_file = ttk.Button(self.flights_content, text="Cargar archivo de arrivals", width=33,
                                                  command=self.f_load_arrivals)
         self.btn_load_arrivals_file.pack(pady=2, padx=5)
-        ttk.Button(self.flights_content, text="Gráfico: frecuencia horaria", width=33,
+        ttk.Button(self.flights_content,
+                   text="Gráfico: frecuencia horaria",
+                   width=33,
                    command=self.f_plot_arrivals_embedded).pack(pady=2, padx=5)
-        ttk.Button(self.flights_content, text="Gráfico: arrivals por aerolínea", width=33,
+        ttk.Button(self.flights_content,
+                   text="Gráfico: arrivals por aerolínea",
+                   width=33,
                    command=self.f_ui_plot_airlines_selected).pack(pady=2, padx=5)
-        ttk.Button(self.flights_content, text="Gráfico: arrivals por origen", width=33,
+        ttk.Button(self.flights_content,
+                   text="Gráfico: arrivals por origen",
+                   width=33,
                    command=self.f_plot_type_embedded).pack(pady=2, padx=5)
-        ttk.Button(self.flights_content, text="Guardar arrivals a fichero", width=33,
+        ttk.Button(self.flights_content,
+                   text="Guardar arrivals a fichero",
+                   width=33,
                    command=self.f_save_flights).pack(pady=2, padx=5)
-        ttk.Button(self.flights_content, text="Abrir trayectorias en Google Earth", width=33,
+        ttk.Button(self.flights_content,
+                   text="Abrir trayectorias en Google Earth",
+                   width=33,
                    command=self.f_map_flights).pack(pady=2, padx=5)
-        ttk.Button(self.flights_content, text="Filtrar larga distancia (>2000 km)", width=33,
+        ttk.Button(self.flights_content,
+                   text="Filtrar larga distancia (>2000 km)",
+                   width=33,
                    command=self.f_long_flights).pack(pady=2, padx=5)
 
         # ----------------- SUBMENÚ 3: ADMINISTRADOR DE GATES LEBL -----------------
@@ -449,25 +477,43 @@ class AirportApp:
 
         self.gates_content = tk.Frame(self.button_frame, bg="#f4f6f7", bd=1, relief="groove")
 
-        self.btn_load_structure_file = ttk.Button(self.gates_content, text="Cargar estructura LEBL", width=33,
+        self.btn_load_structure_file = ttk.Button(self.gates_content,
+                                                  text="Cargar estructura LEBL",
+                                                  width=33,
                                                   command=self.f_ui_load_airport_structure)
         self.btn_load_structure_file.pack(pady=2, padx=5)
-        ttk.Button(self.gates_content, text="Tabla de ocupación de gates", width=33,
+        ttk.Button(self.gates_content,
+                   text="Tabla de ocupación de gates",
+                   width=33,
                    command=self.f_ui_gate_occupancy).pack(pady=2, padx=5)
-        ttk.Button(self.gates_content, text="Mapa de gates utilizadas", width=33,
+        ttk.Button(self.gates_content,
+                   text="Mapa de gates utilizadas",
+                   width=33,
                    command=self.f_ui_gate_usage_diagram).pack(pady=2, padx=5)
-        ttk.Button(self.gates_content, text="Configurar gates por área", width=33,
+        ttk.Button(self.gates_content,
+                   text="Configurar gates por área",
+                   width=33,
                    command=self.f_ui_set_gates).pack(pady=2, padx=5)
-        self.btn_load_airlines_file = ttk.Button(self.gates_content, text="Cargar aerolíneas T1/T2", width=33,
+        self.btn_load_airlines_file = ttk.Button(self.gates_content,
+                                                 text="Cargar aerolíneas T1/T2",
+                                                 width=33,
                                                  command=self.f_ui_load_airlines)
         self.btn_load_airlines_file.pack(pady=2, padx=5)
-        ttk.Button(self.gates_content, text="Verificar aerolínea en terminal", width=33,
+        ttk.Button(self.gates_content,
+                   text="Verificar aerolínea en terminal",
+                   width=33,
                    command=self.f_ui_is_airline_in_terminal).pack(pady=2, padx=5)
-        ttk.Button(self.gates_content, text="Buscar terminal de aerolínea", width=33,
+        ttk.Button(self.gates_content,
+                   text="Buscar terminal de aerolínea",
+                   width=33,
                    command=self.f_ui_search_terminal).pack(pady=2, padx=5)
-        ttk.Button(self.gates_content, text="Asignar gate a vuelo", width=33,
+        ttk.Button(self.gates_content,
+                   text="Asignar gate a vuelo",
+                   width=33,
                    command=self.f_ui_assign_gate).pack(pady=2, padx=5)
-        ttk.Button(self.gates_content, text="Localizar gate por vuelo", width=33,
+        ttk.Button(self.gates_content,
+                   text="Localizar gate por vuelo",
+                   width=33,
                    command=self.f_ui_locate_flight_gate).pack(pady=2, padx=5)
 
         # ----------------- SUBMENÚ 4: SALIDAS -----------------
@@ -484,38 +530,65 @@ class AirportApp:
 
         self.fase4_content = tk.Frame(self.button_frame, bg="#f4f6f7", bd=1, relief="groove")
 
-        self.btn_load_departures_file = ttk.Button(self.fase4_content, text="Cargar fichero departures", width=33,
+        self.btn_load_departures_file = ttk.Button(self.fase4_content,
+                                                   text="Cargar fichero departures",
+                                                   width=33,
                                                    command=self.f_ui_load_departures)
         self.btn_load_departures_file.pack(pady=2, padx=5)
-        ttk.Button(self.fase4_content, text="Fusionar arrivals/departures", width=33,
+        ttk.Button(self.fase4_content,
+                   text="Fusionar arrivals/departures",
+                   width=33,
                    command=self.f_ui_merge_movements).pack(pady=2, padx=5)
-        ttk.Button(self.fase4_content, text="Asignar Pernoctas", width=33,
+        ttk.Button(self.fase4_content,
+                   text="Asignar Pernoctas",
+                   width=33,
                    command=self.f_ui_night_aircraft).pack(pady=2, padx=5)
-        ttk.Button(self.fase4_content, text="Asignación dinámica por hora", width=33,
+        ttk.Button(self.fase4_content,
+                   text="Asignación dinámica por hora",
+                   width=33,
                    command=self.f_ui_assign_gates_at_time).pack(pady=2, padx=5)
-        ttk.Button(self.fase4_content, text="Gráfico: ocupación diaria 24h", width=33,
+        ttk.Button(self.fase4_content,
+                   text="Gráfico: ocupación diaria 24h",
+                   width=33,
                    command=self.f_ui_plot_day_occupancy_embedded).pack(pady=2, padx=5)
-        ttk.Button(self.fase4_content, text="Mapa de gates por hora", width=33,
+        ttk.Button(self.fase4_content,
+                   text="Mapa de gates por hora",
+                   width=33,
                    command=self.f_ui_plot_movements_by_hour).pack(pady=2, padx=5)
-        ttk.Button(self.fase4_content, text="Saturación del aeropuerto", width=33,
+        ttk.Button(self.fase4_content,
+                   text="Saturación del aeropuerto",
+                   width=33,
                    command=self.f_ui_radar_saturacion).pack(pady=2, padx=5)
 
         # NUEVO BOTÓN: Auditoría de Conectividad Hub
-        ttk.Button(self.fase4_content, text="Auditoría Hub Analysis", width=33,
+        ttk.Button(self.fase4_content,
+                   text="Auditoría Hub Analysis",
+                   width=33,
                    command=self.f_ui_hub_analysis).pack(pady=2, padx=5)
-        ttk.Button(self.fase4_content, text="Análisis METAR", width=33,
+        ttk.Button(self.fase4_content,
+                   text="Análisis METAR",
+                   width=33,
                    command=self.f_ui_metar_analysis).pack(pady=2, padx=5)
 
+        # ==============================================================================================================
         # Cierre Seguro de Aplicación
-        tk.Button(self.exit_frame, text="SALIR DE LA APLICACIÓN", width=35, bg="#C0392B", fg="white",
-                  activebackground="#A93226", activeforeground="white", font=("Segoe UI", 10, "bold"), relief="flat",
-                  cursor="hand2", command=self.f_ui_exit_with_feedback).pack(fill="x")
+        # ==============================================================================================================
+        tk.Button(self.exit_frame,
+                  text="SALIR DE LA APLICACIÓN",
+                  width=35,
+                  bg="#C0392B",
+                  fg="white",
+                  activebackground="#A93226",
+                  activeforeground="white",
+                  font=("Segoe UI", 10, "bold"),
+                  relief="flat",
+                  cursor="hand2",
+                  command=self.f_ui_exit_with_feedback).pack(fill="x")
 
     # --- MÉTODOS DE ANIMACIÓN DE LOS MENÚS (PACK / PACK_FORGET) ---
         # =====================================================================================
         # NOU MÈTODE FASE 1: FILTRATGE DINÀMIC D'AEROLÍNIES SELECCIONADES
         # =====================================================================================
-
 
     def f_ui_exit_with_feedback(self):
         """
@@ -537,8 +610,7 @@ class AirportApp:
             text="¿Qué te ha parecido el programa?",
             font=("Segoe UI", 22, "bold"),  # Tamaño de la pregunta grande
             bg="white",
-            fg="black"
-        ).pack(pady=(60, 50))
+            fg="black").pack(pady=(60, 50))
 
         # 4. Contenedor horizontal para situar los tres botones gigantes de opción
         btn_frame = tk.Frame(encuesta_container, bg="white")
@@ -555,10 +627,10 @@ class AirportApp:
             # NUEVO: Evaluamos si la opinión ha sido "Mal" para cambiar el mensaje en pantalla
             if opinion == "Mal":
                 texto_despedida = "Lamentamos escuchar eso. ¡Trabajaremos duro para mejorar!\nCerrando el sistema..."
-                color_texto = "#c0392b"  # Color rojo oscuro para enfatizar la disculpa
+                color_texto = "#c0392b"                                                                                 # Color rojo oscuro para enfatizar la disculpa
             else:
                 texto_despedida = "¡Muchas gracias por tu colaboración!\nCerrando el sistema..."
-                color_texto = "black"  # Texto negro estándar para Bien/Normal
+                color_texto = "black"                                                                                   # Texto negro estándar para Bien/Normal
 
             # Mostramos el mensaje correspondiente en el contenedor
             tk.Label(
@@ -566,8 +638,7 @@ class AirportApp:
                 text=texto_despedida,
                 font=("Segoe UI", 18, "bold"),
                 bg="white",
-                fg=color_texto
-            ).pack(expand=True)
+                fg=color_texto).pack(expand=True)
 
             # Pausa de 1.5 segundos para que el usuario pueda leer el mensaje antes de salir
             self.root.after(1500, self.root.quit)
@@ -578,19 +649,18 @@ class AirportApp:
         tk.Button(
             btn_frame,
             text="😊 Bien",
-            font=("Segoe UI", 18, "bold"),  # Letra tamaño 18
-            bg="#2ECC71",  # Fondo verde
-            fg="black",  # Caras y texto en NEGRO
+            font=("Segoe UI", 18, "bold"),
+            bg="#2ECC71",
+            fg="black",
             activebackground="#27AE60",
             activeforeground="black",
-            width=16,  # Ancho maximizado
-            height=3,  # Alto de triple fila
+            width=16,
+            height=3,
             relief="flat",
-            highlightbackground="black",  # Color del borde: NEGRO
-            highlightthickness=1,  # Grosor del borde: 1 píxel
+            highlightbackground="black",
+            highlightthickness=1,
             cursor="hand2",
-            command=lambda: registrar_y_salir("Bien")
-        ).pack(side="left", padx=20)  # Separación lateral
+            command=lambda: registrar_y_salir("Bien")).pack(side="left", padx=20)
 
         # Botón "Normal" (Fondo Amarillo, Letras Negras, Borde Negro - GIGANTE)
         tk.Button(
@@ -661,8 +731,7 @@ class AirportApp:
             text="Saturación del aeropuerto",
             font=("Segoe UI", 15, "bold"),
             bg="white",
-            fg="#355C8A"
-        ).pack(anchor="w", pady=(0, 8))
+            fg="#355C8A").pack(anchor="w", pady=(0, 8))
 
         legend_frame = tk.Frame(main_frame, bg="white")
         legend_frame.pack(fill="x", pady=(0, 10))
@@ -797,8 +866,7 @@ class AirportApp:
             text="📊 AUDITORÍA DE CONECTIVIDAD: HUB ANALYSIS",
             font=("Segoe UI", 14, "bold"),
             bg="white",
-            fg="#2c3e50"
-        ).pack(pady=(5, 10))
+            fg="#2c3e50").pack(pady=(5, 10))
 
         # 3. LÓGICA DE EXTRACCIÓN Y PROCESAMIENTO DE DATOS
         conexiones_viables = 0
@@ -864,32 +932,61 @@ class AirportApp:
                         conexiones_por_aerolinea[arr_airline[:12]] = conexiones_por_aerolinea.get(arr_airline[:12], 0) + 1
 
         # 4. RENDERIZADO VISUAL: SECCIÓN KPIs (Bordes negros estrictos)
-        metrics_frame = tk.LabelFrame(hub_frame, text=" Indicadores Clave de Rendimiento (KPIs) ", font=("Segoe UI", 10, "bold"), bg="#f8f9fa", fg="#34495e", bd=1, relief="solid")
+        metrics_frame = tk.LabelFrame(hub_frame,
+                                      text=" Indicadores Clave de Rendimiento (KPIs) ",
+                                      font=("Segoe UI", 10, "bold"),
+                                      bg="#f8f9fa",
+                                      fg="#34495e",
+                                      bd=1,
+                                      relief="solid")
         metrics_frame.pack(fill="x", padx=10, pady=5)
 
-        kpi1 = tk.Frame(metrics_frame, bg="#dff0d8", highlightbackground="black", highlightthickness=1, width=220, height=75)
+        kpi1 = tk.Frame(metrics_frame,
+                        bg="#dff0d8",
+                        highlightbackground="black",
+                        highlightthickness=1,
+                        width=220,
+                        height=75)
         kpi1.pack(side="left", expand=True, padx=10, pady=8)
         kpi1.pack_propagate(False)
-        tk.Label(kpi1, text="Conexiones Viables", font=("Segoe UI", 10, "bold"), bg="#dff0d8", fg="#1e8449").pack(pady=(8,0))
+        tk.Label(kpi1,
+                 text="Conexiones Viables",
+                 font=("Segoe UI", 10, "bold"),
+                 bg="#dff0d8",
+                 fg="#1e8449").pack(pady=(8,0))
         tk.Label(kpi1, text=str(conexiones_viables), font=("Segoe UI", 15, "bold"), bg="#dff0d8", fg="black").pack()
 
         kpi2 = tk.Frame(metrics_frame, bg="#f2dede", highlightbackground="black", highlightthickness=1, width=220, height=75)
         kpi2.pack(side="left", expand=True, padx=10, pady=8)
         kpi2.pack_propagate(False)
-        tk.Label(kpi2, text="Riesgo Pérdida de Maletas", font=("Segoe UI", 10, "bold"), bg="#f2dede", fg="#c0392b").pack(pady=(8,0))
+        tk.Label(kpi2,
+                 text="Riesgo Pérdida de Maletas",
+                 font=("Segoe UI", 10, "bold"),
+                 bg="#f2dede",
+                 fg="#c0392b").pack(pady=(8,0))
         tk.Label(kpi2, text=str(conexiones_criticas_maletas), font=("Segoe UI", 15, "bold"), bg="#f2dede", fg="black").pack()
 
         # Ranking de aerolíneas
-        ranking_frame = tk.LabelFrame(hub_frame, text=" Eficiencia por Operador (Top Conexiones Activas) ", font=("Segoe UI", 10, "bold"), bg="white", fg="#34495e", bd=1, relief="solid")
+        ranking_frame = tk.LabelFrame(hub_frame,
+                                      text=" Eficiencia por Operador (Top Conexiones Activas) ",
+                                      font=("Segoe UI", 10, "bold"),
+                                      bg="white",
+                                      fg="#34495e",
+                                      bd=1,
+                                      relief="solid")
         ranking_frame.pack(fill="x", padx=10, pady=5)
 
         if conexiones_por_aerolinea:
             sorted_airlines = sorted(conexiones_por_aerolinea.items(), key=lambda x: x[1], reverse=True)
             tk.Label(ranking_frame, text=f"  {'AEROLÍNEA':<22}{'CONEXIONES CONTROLADAS':<25}", font=("Consolas", 10, "bold"), bg="#eef2f5", fg="black", anchor="w", padx=10).pack(fill="x", pady=(2,2))
-            for air, total in sorted_airlines[:3]: # Mostramos las 3 principales para dejar espacio al panel explicativo
+            for air, total in sorted_airlines[:3]:                                                                      # Mostramos las 3 principales para dejar espacio al panel explicativo
                 tk.Label(ranking_frame, text=f"  ✈️ {air:<20}{total:<25}", font=("Consolas", 10), bg="white", fg="black", anchor="w", padx=15).pack(fill="x", pady=1)
         else:
-            tk.Label(ranking_frame, text="No se detectaron conexiones directas con este set de datos.", font=("Segoe UI", 10, "italic"), bg="white", fg="gray").pack(pady=10)
+            tk.Label(ranking_frame,
+                     text="No se detectaron conexiones directas con este set de datos.",
+                     font=("Segoe UI", 10, "italic"),
+                     bg="white",
+                     fg="gray").pack(pady=10)
 
         # 5. NUEVO PANEL: DOCUMENTACIÓN Y EXPLICACIÓN DE LA FUNCIÓN
         help_frame = tk.LabelFrame(hub_frame, text=" 📑 ¿Qué hace esta herramienta? (Guía de Operación Hub) ", font=("Segoe UI", 10, "bold"), bg="#e8f4f8", fg="#2980b9", bd=1, relief="solid")
@@ -969,9 +1066,9 @@ class AirportApp:
             self.btn_toggle_fase4.configure(text="▼ SALIDAS")
             self.fase4_visible = True
 
-    # =====================================================================================
-    # SECCIÓN 4: CAPA DE INTERFAZ PARA CONTROLADORES ORIGINALES Y LEBL (CON VALIDACIONES)
-    # =====================================================================================
+    # ==================================================================================================================
+    # CAPA DE INTERFAZ PARA CONTROLADORES ORIGINALES Y LEBL (CON VALIDACIONES)
+    # ==================================================================================================================
     def f_load(self):
         """Cargar Archivo Aeropuertos con validación estricta de cabecera."""
         path = filedialog.askopenfilename(title="Seleccionar aeropuertos", filetypes=[("Text files", "*.txt")])
@@ -2008,54 +2105,75 @@ class AirportApp:
         plt.close(fig)
 
     def f_ui_locate_flight_gate(self):
-        """
-        Abre una pequeña ventana emergente (Toplevel) para que el usuario seleccione o escriba
-        el código de un vuelo, y al pulsar el botón lo resalta en el mapa o diagrama de puertas.
-        """
-        # 1. Crear la ventana emergente
+        """Permite seleccionar un vuelo y resalta su gate asignada en el mapa de terminales."""
+        if not self.bcn_airport:
+            messagebox.showerror("Error", "Carga primero la estructura del aeropuerto.")
+            return
+
+        vuelos_asignados = []
+        for terminal in self.bcn_airport.terminals:
+            for area in terminal.boarding_areas:
+                for gate in area.gates:
+                    if gate.occupied and gate.aircraft_id:
+                        vuelos_asignados.append(gate.aircraft_id)
+
+        if not vuelos_asignados:
+            messagebox.showwarning("Sin asignaciones", "Todavía no hay vuelos asignados a ninguna gate.")
+            return
+
         dialog = tk.Toplevel(self.root)
-        dialog.title("Localizar Vuelo")
-        dialog.geometry("300x150")
+        dialog.title("Localizar gate de vuelo")
+        dialog.configure(bg="#f4f6f7")
+        self.center_window(dialog, 340, 150)
         dialog.resizable(False, False)
         dialog.transient(self.root)
         dialog.grab_set()
 
-        # Centrar el diálogo respecto a la ventana principal
-        dialog.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (dialog.winfo_width() // 2)
-        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (dialog.winfo_height() // 2)
-        dialog.geometry(f"+{x}+{y}")
+        tk.Label(dialog, text="Selecciona el vuelo que quieres localizar:",
+                 bg="#f4f6f7", font=("Segoe UI", 10, "bold")).pack(pady=(18, 8))
+        combo = ttk.Combobox(dialog, values=sorted(vuelos_asignados), state="readonly", width=22)
+        combo.pack(pady=4)
+        combo.current(0)
 
-        # Elementos visuales de la interfaz
-        ttk.Label(dialog, text="Seleccione o introduzca el código de vuelo:", font=("Arial", 10)).pack(pady=10)
-
-        # Obtener la lista de vuelos cargados para el ComboBox (evita errores si no hay vuelos)
-        lista_vuelos = []
-        if hasattr(self, 'flights') and self.flights:
-            lista_vuelos = [vuelo.flight_code for vuelo in self.flights]
-
-        combo = ttk.Combobox(dialog, values=lista_vuelos, width=20)
-        combo.pack(pady=5)
-        combo.focus()
-
-        # 2. Definir la función lógica interna ANTES de usarla en el botón
         def localizar():
-            codigo = combo.get().strip().upper()
-            if not codigo:
-                messagebox.showwarning("Campo Vacío", "Por favor selecciona o introduce un vuelo.")
-                return
-
-            # Destruimos la ventana emergente PRIMERO para liberar recursos de Tkinter
+            codigo = combo.get()
             dialog.destroy()
 
-            # Llamamos a la función encargada de dibujar el diagrama y resaltar el avión.
-            # Al haber cerrado el diálogo, esta función pintará limpiamente sobre 'self.plot_frame'
+            # Buscar automáticamente en qué terminal está el vuelo
+            terminal_encontrada = None
+            for terminal in self.bcn_airport.terminals:
+                for area in terminal.boarding_areas:
+                    for gate in area.gates:
+                        if gate.aircraft_id == codigo:
+                            terminal_encontrada = terminal
+                            break
+                    if terminal_encontrada:
+                        break
+                if terminal_encontrada:
+                    break
+
+            if not terminal_encontrada:
+                messagebox.showwarning("No encontrado", f"No se encontró la gate del vuelo {codigo}.")
+                return
+
+            # Ir directamente a la terminal correcta sin preguntar
+            self.clear_plot_frame()
+            self._diagram_stats = {"hay_ocupadas": False, "encontrado_highlight": False}
+            self._render_single_terminal(self.plot_frame, terminal_encontrada, codigo)
+
+            if not self._diagram_stats["encontrado_highlight"]:
+                messagebox.showwarning("Gate no encontrada",
+                                       f"No se ha encontrado ninguna gate ocupada por el vuelo {codigo}.")
+
+        ttk.Button(dialog, text="Marcar en mapa", command=localizar, width=18).pack(pady=10)
+        dialog.wait_window()
+
+        def localizar():
+            codigo = combo.get()
+            dialog.destroy()
             self.f_ui_gate_usage_diagram(highlight_aircraft=codigo)
 
-        # 3. Crear el botón vinculando la función corregida y poner a la escucha la ventana
-        btn_marcar = ttk.Button(dialog, text="Marcar en mapa", command=localizar, width=18)
-        btn_marcar.pack(pady=10)
-
+        ttk.Button(dialog, text="Marcar en mapa", command=localizar, width=18).pack(pady=10)
         dialog.wait_window()
 
     def f_ui_load_airlines(self):
@@ -2401,6 +2519,72 @@ class AirportApp:
         except Exception as e:
             messagebox.showerror("Error", f"No se pudo leer el archivo: {e}")
 
+#=======================================================================================================================
+    #NUEVO
+    def f_ui_count_departures_by_period(self):
+        """Cuenta las salidas previstas de LEBL entre dos horas indicadas por el usuario."""
+        if not self.lista_salidas:
+            messagebox.showerror("Sin departures", "Primero debes cargar el archivo de departures.")
+            return
+
+        try:
+            hora_inicio = int(self.departure_start_hour_entry.get().strip())
+            hora_fin = int(self.departure_end_hour_entry.get().strip())
+        except ValueError:
+            messagebox.showwarning("Horas no válidas", "Introduce dos números enteros entre 0 y 23.")
+            return
+
+        if not (0 <= hora_inicio <= 23 and 0 <= hora_fin <= 23):
+            messagebox.showwarning("Horas fuera de rango", "Las horas deben estar entre 0 y 23.")
+            return
+
+        def extraer_hora_salida(salida):
+            texto_hora = str(getattr(salida, "departure_time", "")).strip()
+            if not texto_hora:
+                return None
+            try:
+                if ":" in texto_hora:
+                    return int(texto_hora.split(":")[0])
+                if len(texto_hora) >= 2 and texto_hora[:2].isdigit():
+                    return int(texto_hora[:2])
+            except ValueError:
+                return None
+            return None
+
+        salidas_periodo = []
+        for salida in self.lista_salidas:
+            hora_salida = extraer_hora_salida(salida)
+            if hora_salida is None:
+                continue
+
+            if hora_inicio == hora_fin:
+                esta_en_periodo = hora_salida == hora_inicio
+            elif hora_inicio < hora_fin:
+                esta_en_periodo = hora_inicio <= hora_salida < hora_fin
+            else:
+                esta_en_periodo = hora_salida >= hora_inicio or hora_salida < hora_fin
+
+            if esta_en_periodo:
+                salidas_periodo.append(salida)
+
+        if hora_inicio == hora_fin:
+            texto_periodo = f"{hora_inicio:02d}:00 - {hora_inicio:02d}:59"
+        else:
+            texto_periodo = f"{hora_inicio:02d}:00 - antes de las {hora_fin:02d}:00"
+
+        self.show_loaded_table(
+            f"Salidas previstas entre {texto_periodo}",
+            ("Aircraft", "Destino", "Hora salida", "Aerolínea"),
+            [(dep.codigo, dep.destination, dep.departure_time, dep.company) for dep in salidas_periodo]
+        )
+
+        messagebox.showinfo(
+            "Salidas previstas",
+            f"Hay {len(salidas_periodo)} vuelos con salida prevista de LEBL entre {texto_periodo}."
+        )
+
+
+#======================================================================================================================
     def f_ui_merge_movements(self):
         if not self.lista_vuelos:
             messagebox.showerror("Error", "Primero debes cargar los vuelos de llegada (Submenú 2).")
@@ -2578,10 +2762,6 @@ class AirportApp:
 
         tk.Label(dialog, text="Pega un METAR para analizar condiciones operativas:",
                  bg="#f4f6f7", fg="#2c3e50", font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=14, pady=(14, 6))
-        tk.Label(dialog,
-                 text="Introduce una línea METAR completa: aeropuerto, fecha/hora Z, viento, visibilidad, nubes, temperatura y QNH.\nEjemplo: LEBL 021200Z 22012KT 9999 FEW025 24/16 Q1016",
-                 bg="#f4f6f7", fg="#566573", font=("Segoe UI", 9, "italic"),
-                 justify="left").pack(anchor="w", padx=14, pady=(0, 6))
         text_metar = tk.Text(dialog, height=5, wrap="word", font=("Consolas", 10))
         text_metar.pack(fill="both", expand=True, padx=14, pady=6)
         text_metar.insert("1.0", "LEBL 021200Z 22012KT 9999 FEW025 24/16 Q1016")
@@ -2740,6 +2920,8 @@ class AirportApp:
         # Avisem a l'usuari amb un missatge de confirmació
         messagebox.showinfo("Simulación Diaria",
                             "Gráfico de ocupación de las 24 horas generado correctamente en el panel de visualización.")
+
+
 # =====================================================================================
 # SECCIÓN 6: PUNTO DE ENTRADA AL PROGRAMA (MAIN RUNNER)
 # =====================================================================================
