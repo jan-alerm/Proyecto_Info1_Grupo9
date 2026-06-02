@@ -1,3 +1,5 @@
+import os
+
 class Airport:
     def __init__(self, code, lat, lon):
         self.code = code
@@ -5,7 +7,19 @@ class Airport:
         self.lon = lon
         self.schengen = False
 
+
+# ======================================================================================================================
+# COMPROBACION DE AEROPUERTO SCHENGEN (IS_SCHENGEN_AIRPORT)
+# ======================================================================================================================
 def is_schengen_airport(code):
+    """ INPUT:          -> code: el código ICAO del aeropuerto
+
+        OUTPUT:         -> TRUE: si el aeropuerto pertenece al espacio Schengen
+                        -> FALSE: si no pertenece o el codigo esta vacio
+
+        DESCRIPTION:    -> clasifica un aeropuerto utilizando el prefijo ICAO del codigo
+                        -> compara el prefijo con la lista de zonas Schengen consideradas en el proyecto
+    """
     if not code:
         return False
     prefix = code[:2]
@@ -16,10 +30,32 @@ def is_schengen_airport(code):
 
     return prefix in schengen_prefixes
 
+
+# ======================================================================================================================
+# ASIGNACION DEL ATRIBUTO SCHENGEN (SET_SCHENGEN)
+# ======================================================================================================================
 def set_schengen(airport):
+    """ INPUT:          -> airport: objeto Airport
+
+        OUTPUT:         -> no devuelve ningun valor
+
+        DESCRIPTION:    -> actualiza el atributo schengen del objeto aeropuerto
+                        -> reutiliza is_schengen_airport para decidir si el codigo ICAO es Schengen
+    """
     airport.schengen = is_schengen_airport(airport.code)
 
+
+# ======================================================================================================================
+# MOSTRAR DATOS DE AEROPUERTO (PRINT_AIRPORT)
+# ======================================================================================================================
 def print_airport(airport):
+    """ INPUT:          -> airport: objeto Airport que se quiere mostrar
+
+        OUTPUT:         -> imprime por terminal los datos principales del aeropuerto
+
+        DESCRIPTION:    -> muestra codigo ICAO, coordenadas y estado Schengen
+                        -> transforma el booleano schengen en texto comprensible para el usuario
+    """
     if airport.schengen:
         status = "Yes"
     else:
@@ -29,9 +65,20 @@ def print_airport(airport):
     print("Coordinates: ", airport.lat, airport.lon)
     print("Schengen: ",status)
 
-import os
 
+# ======================================================================================================================
+# CARGA DE AEROPUERTOS DESDE FICHERO (LOAD_AIRPORTS)
+# ======================================================================================================================
 def load_airports(filename):
+    """ INPUT:          -> filename: fichero de texto con aeropuertos y coordenadas
+
+        OUTPUT:         -> lista de objetos Airport cargados desde el fichero
+                        -> lista vacia si el fichero no existe
+
+        DESCRIPTION:    -> lee un fichero con formato CODE LAT LON
+                        -> convierte coordenadas en grados/minutos/segundos a coordenadas decimales
+                        -> crea un objeto Airport por cada linea valida encontrada
+    """
     if not os.path.exists(filename):
         return []
 
@@ -65,7 +112,20 @@ def load_airports(filename):
     f.close()
     return lista_aeropuertos
 
+
+# ======================================================================================================================
+# GUARDAR AEROPUERTOS SCHENGEN (SAVE_SCHENGEN_AIRPORTS)
+# ======================================================================================================================
 def save_schengen_airports(airports, filename):
+    """ INPUT:          -> airports: lista de objetos Airport
+                        -> filename: fichero de salida donde guardar los aeropuertos Schengen
+
+        OUTPUT:         -> 1 si se genera el fichero correctamente
+                        -> 0 si no hay aeropuertos Schengen para guardar
+
+        DESCRIPTION:    -> recorre la lista de aeropuertos y filtra los que tienen schengen == True
+                        -> guarda codigo y coordenadas decimales en un fichero de texto
+    """
     hay_schengen = False
     i = 0
     while i < len(airports):
@@ -88,7 +148,19 @@ def save_schengen_airports(airports, filename):
     f.close()
     return 1
 
+
+# ======================================================================================================================
+# ANADIR AEROPUERTO A LA LISTA (ADD_AIRPORT)
+# ======================================================================================================================
 def add_airport(airports,airport):
+    """ INPUT:          -> airports: lista de objetos Airport
+                        -> airport: nuevo objeto Airport que se quiere insertar
+
+        OUTPUT:         -> no devuelve ningun valor
+
+        DESCRIPTION:    -> comprueba si el codigo ICAO ya existe en la lista
+                        -> anade el aeropuerto solamente si no esta duplicado
+    """
     encontrado = False
     i = 0
     while i < len(airports):
@@ -99,7 +171,20 @@ def add_airport(airports,airport):
     if not encontrado:
         airports.append(airport)
 
+
+# ======================================================================================================================
+# ELIMINAR AEROPUERTO DE LA LISTA (REMOVE_AIRPORT)
+# ======================================================================================================================
 def remove_airport(airports,code):
+    """ INPUT:          -> airports: lista de objetos Airport
+                        -> code: codigo ICAO del aeropuerto que se quiere eliminar
+
+        OUTPUT:         -> 1 si el aeropuerto se elimina correctamente
+                        -> -1 si no se encuentra el codigo indicado
+
+        DESCRIPTION:    -> busca un aeropuerto por codigo ICAO dentro de la lista
+                        -> elimina el primer objeto que coincida con el codigo proporcionado
+    """
     i = 0
     while i < len(airports):
         if airports[i].code == code:
@@ -110,7 +195,18 @@ def remove_airport(airports,code):
 
 import matplotlib.pyplot as plt
 
+
+# ======================================================================================================================
+# ESTADISTICAS DE AEROPUERTOS SCHENGEN (PLOT_AIRPORTS)
+# ======================================================================================================================
 def plot_airports(airports):
+    """ INPUT:          -> airports: lista de objetos Airport
+
+        OUTPUT:         -> genera un grafico de barras apiladas
+
+        DESCRIPTION:    -> contabiliza cuantos aeropuertos son Schengen y cuantos no lo son
+                        -> representa visualmente ambos grupos mediante Matplotlib
+    """
     schengen = 0
     not_schengen = 0
     i = 0
@@ -128,12 +224,18 @@ def plot_airports(airports):
     plt.legend()
     plt.show()
 
-#=========================================== MAPA DE AEROPUERTOS EN GOOGLE EARTH =======================================
+
+# ======================================================================================================================
+# MAPA DE AEROPUERTOS EN GOOGLE EARTH (MAP_AIRPORTS)
+# ======================================================================================================================
 def map_airports(airports):
-    """ INPUT:          -> airports (la lista de objetos Airport)
-        OUTPUT:         -> genera el fichero airports_map.kml y lo abre automáticamente en Google Earth
-        DESCRIPCIÓN:    -> recorre todos los aeropuertos de la lista y crea un marcador KML para cada uno
-                           (azul para los Schengen y rojo para los No Schengen)
+    """ INPUT:          -> airports: lista de objetos Airport
+
+        OUTPUT:         -> genera el fichero airports_map.kml
+                        -> abre el fichero automaticamente en Google Earth
+
+        DESCRIPTION:    -> recorre todos los aeropuertos de la lista y crea un marcador KML para cada uno
+                        -> usa color azul para aeropuertos Schengen y rojo para aeropuertos no Schengen
     """
     f = open("airports_map.kml", "w")
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
