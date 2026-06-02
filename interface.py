@@ -1,22 +1,23 @@
-# =====================================================================================
-# SECCIÓN 1: IMPORTACIÓN DE LIBRERÍAS Y MÓDULOS DEL PROYECTO
-# =====================================================================================
+# ======================================================================================================================
+# IMPORTACIONES DE LIBRERÍAS Y MÓDULOS DEL PROYECTO
+# ======================================================================================================================
+# Librería base para la interfaz gráfica (ventanas, botones, frames)
 import tkinter as tk  # Librería base para la interfaz gráfica (ventanas, botones, frames)
-from tkinter import messagebox, filedialog, \
-    ttk  # Componentes avanzados (cuadros de diálogo, selector de archivos, estilos)
-import matplotlib.pyplot as plt  # Librería para generar gráficos de barras y frecuencias
-from matplotlib.backends.backend_tkagg import \
-    FigureCanvasTkAgg  # Permite incrustar gráficos de Matplotlib directamente dentro de Tkinter
+from tkinter import messagebox, filedialog, ttk
 
-# Importación de funciones lógicas de los archivos externos de tu proyecto corporativo
-from airport import *  # Carga de aeropuertos, kml, cálculos geográficos y de espacio Schengen
-from Aircraft import *  # Control de aeronaves, operaciones y trazas de vuelos de llegada
-import LEBL  # Módulo independiente que administra los terminales y asignaciones de puertas de Barcelona
+# Librería para generar gráficos de barras y frecuencias
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+# Módulos desarrollados para el proyecto
+from airport import *                                                                                                   # Carga de aeropuertos, kml, cálculos geográficos y de espacio Schengen
+from aircraft import *                                                                                                  # Control de aeronaves, operaciones y trazas de vuelos de llegada
+import LEBL                                                                                                             # Módulo independiente que administra los terminales y asignaciones de puertas de Barcelona
 
 
-# =====================================================================================
-# SECCIÓN 2: CLASE PRINCIPAL DE LA INTERFAZ GRÁFICA
-# =====================================================================================
+# ======================================================================================================================
+# CLASE PRINCIPAL DE LA INTERFAZ GRÁFICA
+# ======================================================================================================================
 class AirportApp:
     def __init__(self, root):
         """Constructor de la aplicación: Inicializa la ventana y todos sus componentes."""
