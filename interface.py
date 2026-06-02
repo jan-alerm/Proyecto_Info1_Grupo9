@@ -2599,6 +2599,10 @@ class AirportApp:
 
         tk.Label(dialog, text="Pega un METAR para analizar condiciones operativas:",
                  bg="#f4f6f7", fg="#2c3e50", font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=14, pady=(14, 6))
+        tk.Label(dialog,
+                 text="Introduce una línea METAR completa: aeropuerto, fecha/hora Z, viento, visibilidad, nubes, temperatura y QNH.\nEjemplo: LEBL 021200Z 22012KT 9999 FEW025 24/16 Q1016",
+                 bg="#f4f6f7", fg="#566573", font=("Segoe UI", 9, "italic"),
+                 justify="left").pack(anchor="w", padx=14, pady=(0, 6))
         text_metar = tk.Text(dialog, height=5, wrap="word", font=("Consolas", 10))
         text_metar.pack(fill="both", expand=True, padx=14, pady=6)
         text_metar.insert("1.0", "LEBL 021200Z 22012KT 9999 FEW025 24/16 Q1016")
