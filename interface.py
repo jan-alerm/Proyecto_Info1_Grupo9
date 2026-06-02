@@ -2105,75 +2105,54 @@ class AirportApp:
         plt.close(fig)
 
     def f_ui_locate_flight_gate(self):
-        """Permite seleccionar un vuelo y resalta su gate asignada en el mapa de terminales."""
-        if not self.bcn_airport:
-            messagebox.showerror("Error", "Carga primero la estructura del aeropuerto.")
-            return
-
-        vuelos_asignados = []
-        for terminal in self.bcn_airport.terminals:
-            for area in terminal.boarding_areas:
-                for gate in area.gates:
-                    if gate.occupied and gate.aircraft_id:
-                        vuelos_asignados.append(gate.aircraft_id)
-
-        if not vuelos_asignados:
-            messagebox.showwarning("Sin asignaciones", "Todavía no hay vuelos asignados a ninguna gate.")
-            return
-
+        """
+        Abre una pequeña ventana emergente (Toplevel) para que el usuario seleccione o escriba
+        el código de un vuelo, y al pulsar el botón lo resalta en el mapa o diagrama de puertas.
+        """
+        # 1. Crear la ventana emergente
         dialog = tk.Toplevel(self.root)
-        dialog.title("Localizar gate de vuelo")
-        dialog.configure(bg="#f4f6f7")
-        self.center_window(dialog, 340, 150)
+        dialog.title("Localizar Vuelo")
+        dialog.geometry("300x150")
         dialog.resizable(False, False)
         dialog.transient(self.root)
         dialog.grab_set()
 
-        tk.Label(dialog, text="Selecciona el vuelo que quieres localizar:",
-                 bg="#f4f6f7", font=("Segoe UI", 10, "bold")).pack(pady=(18, 8))
-        combo = ttk.Combobox(dialog, values=sorted(vuelos_asignados), state="readonly", width=22)
-        combo.pack(pady=4)
-        combo.current(0)
+        # Centrar el diálogo respecto a la ventana principal
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (dialog.winfo_width() // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
 
+        # Elementos visuales de la interfaz
+        ttk.Label(dialog, text="Seleccione o introduzca el código de vuelo:", font=("Arial", 10)).pack(pady=10)
+
+        # Obtener la lista de vuelos cargados para el ComboBox (evita errores si no hay vuelos)
+        lista_vuelos = []
+        if hasattr(self, 'flights') and self.flights:
+            lista_vuelos = [vuelo.flight_code for vuelo in self.flights]
+
+        combo = ttk.Combobox(dialog, values=lista_vuelos, width=20)
+        combo.pack(pady=5)
+        combo.focus()
+
+        # 2. Definir la función lógica interna ANTES de usarla en el botón
         def localizar():
-            codigo = combo.get()
-            dialog.destroy()
-
-            # Buscar automáticamente en qué terminal está el vuelo
-            terminal_encontrada = None
-            for terminal in self.bcn_airport.terminals:
-                for area in terminal.boarding_areas:
-                    for gate in area.gates:
-                        if gate.aircraft_id == codigo:
-                            terminal_encontrada = terminal
-                            break
-                    if terminal_encontrada:
-                        break
-                if terminal_encontrada:
-                    break
-
-            if not terminal_encontrada:
-                messagebox.showwarning("No encontrado", f"No se encontró la gate del vuelo {codigo}.")
+            codigo = combo.get().strip().upper()
+            if not codigo:
+                messagebox.showwarning("Campo Vacío", "Por favor selecciona o introduce un vuelo.")
                 return
 
-            # Ir directamente a la terminal correcta sin preguntar
-            self.clear_plot_frame()
-            self._diagram_stats = {"hay_ocupadas": False, "encontrado_highlight": False}
-            self._render_single_terminal(self.plot_frame, terminal_encontrada, codigo)
-
-            if not self._diagram_stats["encontrado_highlight"]:
-                messagebox.showwarning("Gate no encontrada",
-                                       f"No se ha encontrado ninguna gate ocupada por el vuelo {codigo}.")
-
-        ttk.Button(dialog, text="Marcar en mapa", command=localizar, width=18).pack(pady=10)
-        dialog.wait_window()
-
-        def localizar():
-            codigo = combo.get()
+            # Destruimos la ventana emergente PRIMERO para liberar recursos de Tkinter
             dialog.destroy()
+
+            # Llamamos a la función encargada de dibujar el diagrama y resaltar el avión.
+            # Al haber cerrado el diálogo, esta función pintará limpiamente sobre 'self.plot_frame'
             self.f_ui_gate_usage_diagram(highlight_aircraft=codigo)
 
-        ttk.Button(dialog, text="Marcar en mapa", command=localizar, width=18).pack(pady=10)
+        # 3. Crear el botón vinculando la función corregida y poner a la escucha la ventana
+        btn_marcar = ttk.Button(dialog, text="Marcar en mapa", command=localizar, width=18)
+        btn_marcar.pack(pady=10)
+
         dialog.wait_window()
 
     def f_ui_load_airlines(self):
