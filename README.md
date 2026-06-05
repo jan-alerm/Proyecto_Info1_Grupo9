@@ -16,7 +16,7 @@ Cambios que hemos hecho para esta versión:
 - Analizar saturación del aeropuerto por franjas horarias
 - Realizar auditoría Hub Analysis para conexiones entre arrivals y departures
 - Analizar condiciones METAR y mostrar impacto operativo básico.
-enlace del video:
+enlace del video: https://youtu.be/p_IzhjjTZC0?feature=shared
 
 
 ---------------------------------------------------------------------------------------------------------------------------------
